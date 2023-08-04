@@ -1,22 +1,47 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net"
 	"net/http"
 	"time"
 )
 
-func register() {
-	res, err := http.Get("http://localhost:8080")
+type ServiceInfo2 struct {
+	ip    string
+	dunno string
+	Other string
+	Prop  string
+}
+
+type ServiceInfo struct {
+	Ip    string
+	Dunno string
+}
+
+func register(addr string) {
+	payload := &ServiceInfo{
+		Ip:    addr,
+		Dunno: "hi there",
+	}
+	jsonData, _ := json.Marshal(payload)
+	fmt.Println(string(jsonData))
+
+	res, err := http.Post(
+		"http://localhost:8080",
+		"application/json",
+		bytes.NewBuffer(jsonData),
+	)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer res.Body.Close()
 
-	body, err := ioutil.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -27,6 +52,20 @@ func unregister() {}
 func heartbeat()  {}
 
 func main() {
+	p := ServiceInfo2{
+		ip:    "123",
+		dunno: "456",
+	}
+
+	fmt.Printf("p = %+v\n", p)
+	r := ServiceInfo2{
+		ip:    "12344",
+		dunno: "45664",
+		Other: "12323",
+		Prop:  "ksmggs",
+	}
+	fmt.Printf("r = %+v\n", r)
+
 	// perform heartbeat
 	go func() {
 		for {
@@ -41,7 +80,7 @@ func main() {
 	}
 
 	// register to service registry
-	register()
+	// register(fmt.Sprint(listener.Addr()))
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("hello darkness my old friend \n"))
