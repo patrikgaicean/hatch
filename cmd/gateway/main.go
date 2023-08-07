@@ -8,6 +8,17 @@ import (
 	"time"
 )
 
+type config struct {
+	name string
+	env  string
+	port int
+}
+
+type application struct {
+	config config
+	// logger *jsonlog.Logger
+}
+
 func main() {
 	port := flag.Int("port", 8000, "Gateway port")
 	flag.Parse()

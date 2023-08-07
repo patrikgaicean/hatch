@@ -1,104 +1,49 @@
 package main
 
 import (
-	"bytes"
-	"encoding/json"
-	"fmt"
-	"io"
 	"log"
 	"net"
-	"net/http"
 	"time"
+
+	"github.com/patriuk/hatch/internal/api"
+	"github.com/patriuk/hatch/internal/api/registry"
 )
 
-type ServiceInfo2 struct {
-	ip    string
-	dunno string
-	Other string
-	Prop  string
-}
-
-type ServiceInfo struct {
-	Ip    string
-	Dunno string
-}
-
-func register(addr string) {
-	payload := &ServiceInfo{
-		Ip:    addr,
-		Dunno: "hi there",
-	}
-	jsonData, _ := json.Marshal(payload)
-	fmt.Println(string(jsonData))
-
-	res, err := http.Post(
-		"http://localhost:8080",
-		"application/json",
-		bytes.NewBuffer(jsonData),
-	)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer res.Body.Close()
-
-	body, err := io.ReadAll(res.Body)
-	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Printf("status: %d - body: %s\n", res.StatusCode, body)
-}
-
-func unregister() {}
-func heartbeat()  {}
-
 func main() {
-	p := ServiceInfo2{
-		ip:    "123",
-		dunno: "456",
-	}
-
-	fmt.Printf("p = %+v\n", p)
-	r := ServiceInfo2{
-		ip:    "12344",
-		dunno: "45664",
-		Other: "12323",
-		Prop:  "ksmggs",
-	}
-	fmt.Printf("r = %+v\n", r)
-
-	// perform heartbeat
-	go func() {
-		for {
-			time.Sleep(5 * time.Second)
-			heartbeat()
-		}
-	}()
-
 	listener, err := net.Listen("tcp", ":0")
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	// register to service registry
-	// register(fmt.Sprint(listener.Addr()))
+	// perform heartbeat
+	go func() {
+		for {
+			time.Sleep(5 * time.Second)
+			// registry.SendHeartbeat()
+		}
+	}()
 
-	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("hello darkness my old friend \n"))
+	// register to service registry
+	// registry.Register()
+
+	api := api.New(api.Params{
+		Listener: listener,
 	})
 
-	srv := &http.Server{
-		Handler:      handler,
-		IdleTimeout:  time.Minute,
-		ReadTimeout:  5 * time.Second,
-		WriteTimeout: 10 * time.Second,
-	}
-
-	log.Printf("Starting server on %s", listener.Addr())
-	err = srv.Serve(listener)
+	err = api.Serve()
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	// on server <graceful> shutdown, de-register from service registry
-	// TODO
+	// registry.Unregister()
+
+}
+
+// todo: figure out if this would be better than time.Sleep (seems so..)
+func startHeartbeatScheduler() {
+	ticker := time.NewTicker(30 * time.Second)
+	for range ticker.C {
+		registry.SendHeartbeat()
+	}
 }
