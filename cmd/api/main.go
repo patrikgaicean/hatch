@@ -44,6 +44,9 @@ func main() {
 		Listener:    listener,
 		RegistryURL: *registryUrl,
 	})
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	api := api.New(api.Params{
 		Config:   *cfg,
