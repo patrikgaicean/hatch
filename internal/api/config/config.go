@@ -8,6 +8,7 @@ import (
 	"github.com/patriuk/hatch/internal/helpers"
 )
 
+// create types for protocol and ipType
 type Config struct {
 	Env         string
 	Name        string
@@ -31,7 +32,7 @@ type Params struct {
 func New(params Params) (*Config, error) {
 	addr := params.Listener.Addr().(*net.TCPAddr)
 
-	ipType, err := helpers.GetIPType(string(addr.IP))
+	ipType, err := helpers.GetIPType(addr.IP.String())
 	if err != nil {
 		log.Fatal(err)
 		return nil, fmt.Errorf("GetIPType error: %v", err)
