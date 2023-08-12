@@ -1,16 +1,25 @@
 package main
 
 import (
+	"flag"
 	"log"
 	"net"
 	"time"
 
 	"github.com/patriuk/hatch/internal/api"
+	"github.com/patriuk/hatch/internal/api/config"
 	"github.com/patriuk/hatch/internal/api/registry"
 )
 
 func main() {
-	listener, err := net.Listen("tcp", ":0")
+	name := flag.String("name", "hatch-service", "Service Name")
+	desc := flag.String("desc", "A sample service for testing the hatch gateway", "Service Description")
+	env := flag.String("env", "development", "Environment (development|staging|production)")
+	registryUrl := flag.String("registry", "", "Registry Service Url")
+	flag.Parse()
+
+	protocol := "tcp"
+	listener, err := net.Listen(protocol, ":0")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -26,7 +35,18 @@ func main() {
 	// register to service registry
 	// registry.Register()
 
+	// init config with listener
+	cfg, err := config.New(config.Params{
+		Name:        *name,
+		Description: *desc,
+		Env:         *env,
+		Protocol:    protocol,
+		Listener:    listener,
+		RegistryURL: *registryUrl,
+	})
+
 	api := api.New(api.Params{
+		Config:   *cfg,
 		Listener: listener,
 	})
 

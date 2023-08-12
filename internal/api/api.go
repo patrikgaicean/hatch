@@ -13,6 +13,7 @@ type Api struct {
 }
 
 type Params struct {
+	Config   config.Config
 	Listener net.Listener
 }
 
@@ -23,7 +24,7 @@ type Params struct {
 
 func New(params Params) *Api {
 	api := &Api{
-		Config:   *config.New(),
+		Config:   params.Config,
 		Listener: params.Listener,
 	}
 

@@ -6,8 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-
-	"github.com/patriuk/hatch/internal/api/config"
+	// "github.com/patriuk/hatch/internal/api/config"
 )
 
 // ### service registry data
@@ -52,10 +51,11 @@ func Register() {
 	jsonData, _ := json.Marshal(payload)
 	fmt.Println(string(jsonData))
 
-	cfg := config.New()
+	// cfg := config.New()
 
 	_, err := http.Post(
-		cfg.RegistryURL,
+		// cfg.RegistryURL,
+		"someurl",
 		"application/json",
 		bytes.NewBuffer(jsonData),
 	)
@@ -78,10 +78,11 @@ func Unregister() {
 
 	jsonData, _ := json.Marshal(payload)
 
-	cfg := config.New()
+	// cfg := config.New()
 
 	_, err := http.Post(
-		cfg.RegistryURL,
+		// cfg.RegistryURL,
+		"someurl",
 		"application/json",
 		bytes.NewBuffer(jsonData),
 	)
@@ -104,10 +105,11 @@ func SendHeartbeat() {
 	jsonData, _ := json.Marshal(payload)
 	fmt.Println(string(jsonData))
 
-	cfg := config.New()
+	// cfg := config.New()
 
 	_, err := http.Post(
-		cfg.RegistryURL,
+		// cfg.RegistryURL,
+		"someurl",
 		"application/json",
 		bytes.NewBuffer(jsonData),
 	)
