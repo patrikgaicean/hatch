@@ -2,8 +2,10 @@ package registry
 
 import (
 	"net"
+	"net/http"
 
 	"github.com/patriuk/hatch/internal/registry/config"
+	"github.com/patriuk/hatch/internal/registry/router"
 	"github.com/patriuk/hatch/internal/registry/server"
 )
 
@@ -14,6 +16,7 @@ import (
 type Registry struct {
 	Config   config.Config
 	listener net.Listener
+	router   http.Handler
 }
 
 type Params struct {
@@ -27,6 +30,7 @@ func New(params Params) *Registry {
 	registry := &Registry{
 		Config:   params.Config,
 		listener: params.Listener,
+		router:   router.NewRouter(),
 	}
 
 	// boilerplate
@@ -65,5 +69,5 @@ func New(params Params) *Registry {
 // }
 
 func (registry *Registry) Serve() error {
-	return server.Serve(registry.listener)
+	return server.Serve(registry.listener, registry.router)
 }

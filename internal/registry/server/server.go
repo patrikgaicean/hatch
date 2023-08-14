@@ -7,13 +7,9 @@ import (
 	"time"
 )
 
-func Serve(listener net.Listener) error {
-	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("registryyy handler func"))
-	})
-
+func Serve(listener net.Listener, router http.Handler) error {
 	srv := &http.Server{
-		Handler:      handler,
+		Handler:      router,
 		IdleTimeout:  time.Minute,
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 10 * time.Second,
