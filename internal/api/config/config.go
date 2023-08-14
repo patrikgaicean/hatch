@@ -10,23 +10,24 @@ import (
 
 // create types for protocol and ipType
 type Config struct {
-	Env         string
-	Name        string
-	Description string
-	Address     string
-	Port        int16
-	Protocol    string
-	IPType      string
-	RegistryURL string
+	Env          string
+	Name         string
+	Description  string
+	Address      string
+	IP           string
+	Port         uint16
+	Protocol     string
+	IPType       string
+	RegistryAddr string
 }
 
 type Params struct {
-	Env         string
-	Name        string
-	Description string
-	Protocol    string
-	Listener    net.Listener
-	RegistryURL string
+	Env          string
+	Name         string
+	Description  string
+	Protocol     string
+	Listener     net.Listener
+	RegistryAddr string
 }
 
 func New(params Params) (*Config, error) {
@@ -39,13 +40,14 @@ func New(params Params) (*Config, error) {
 	}
 
 	return &Config{
-		Env:         params.Env,
-		Name:        params.Name,
-		Description: params.Description,
-		Address:     addr.String(),
-		Port:        int16(addr.Port),
-		IPType:      ipType,
-		Protocol:    params.Protocol,
-		RegistryURL: params.RegistryURL,
+		Env:          params.Env,
+		Name:         params.Name,
+		Description:  params.Description,
+		Address:      addr.String(),
+		IP:           addr.IP.String(),
+		Port:         uint16(addr.Port),
+		IPType:       ipType,
+		Protocol:     params.Protocol,
+		RegistryAddr: params.RegistryAddr,
 	}, nil
 }

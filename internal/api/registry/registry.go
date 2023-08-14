@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+
+	"github.com/patriuk/hatch/internal/api/config"
 	// "github.com/patriuk/hatch/internal/api/config"
 )
 
@@ -28,38 +30,32 @@ type register struct {
 
 type details struct {
 	Address  string `json:"address"`
-	Port     int16  `json:"port"`
+	Port     uint16 `json:"port"`
 	Protocol string `json:"protocol"`
 	IPType   string `json:"ipType"`
 }
 
 // Register sends a request to register with the registry service.
-func Register() {
-
-	// probably need to send this directly from where it's called?
-	// i.e. main
+func Register(cfg config.Config) {
 	payload := &register{
-		Name:        "sample-service",
-		Description: "service to test the app interactions",
+		Name:        cfg.Name,
+		Description: cfg.Description,
 		details: details{
-			Address:  "need a param for this",
-			Port:     666, // need param
-			Protocol: "need a param for this",
-			IPType:   "need a param for this",
+			Address:  cfg.Address,
+			Port:     cfg.Port,
+			Protocol: cfg.Protocol,
+			IPType:   cfg.IPType,
 		},
 	}
 	jsonData, _ := json.Marshal(payload)
-	fmt.Println(string(jsonData))
-
-	// cfg := config.New()
 
 	_, err := http.Post(
-		// cfg.RegistryURL,
-		"someurl",
+		cfg.RegistryAddr,
 		"application/json",
 		bytes.NewBuffer(jsonData),
 	)
 	if err != nil {
+		fmt.Println("error pls")
 		log.Fatal(err)
 	}
 
@@ -67,22 +63,18 @@ func Register() {
 }
 
 // Unregister sends a request to unregister from the registry service.
-func Unregister() {
-	// Your logic to perform the "unregister" HTTP request.
+func Unregister(cfg config.Config) {
 	payload := &details{
-		Address:  "hithere",
-		Port:     666,
-		Protocol: "abc",
-		IPType:   "string",
+		Address:  cfg.Address,
+		Port:     cfg.Port,
+		Protocol: cfg.Protocol,
+		IPType:   cfg.IPType,
 	}
 
 	jsonData, _ := json.Marshal(payload)
 
-	// cfg := config.New()
-
 	_, err := http.Post(
-		// cfg.RegistryURL,
-		"someurl",
+		cfg.RegistryAddr,
 		"application/json",
 		bytes.NewBuffer(jsonData),
 	)
@@ -94,22 +86,18 @@ func Unregister() {
 }
 
 // SendHeartbeat sends a heartbeat request to the registry service.
-func SendHeartbeat() {
-	// Your logic to perform the "heartbeat" HTTP request.
-	payload := details{
-		Address:  "need a param for this",
-		Port:     666, // need param
-		Protocol: "need a param for this",
-		IPType:   "need a param for this",
+func SendHeartbeat(cfg config.Config) {
+	payload := &details{
+		Address:  cfg.Address,
+		Port:     cfg.Port,
+		Protocol: cfg.Protocol,
+		IPType:   cfg.IPType,
 	}
-	jsonData, _ := json.Marshal(payload)
-	fmt.Println(string(jsonData))
 
-	// cfg := config.New()
+	jsonData, _ := json.Marshal(payload)
 
 	_, err := http.Post(
-		// cfg.RegistryURL,
-		"someurl",
+		cfg.RegistryAddr,
 		"application/json",
 		bytes.NewBuffer(jsonData),
 	)

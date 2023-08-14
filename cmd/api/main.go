@@ -13,9 +13,9 @@ import (
 
 func main() {
 	name := flag.String("name", "hatch-service", "Service Name")
-	desc := flag.String("desc", "A sample service for testing the hatch gateway", "Service Description")
+	desc := flag.String("desc", "sample-service-for-gateway-testing", "Service Description")
 	env := flag.String("env", "development", "Environment (development|staging|production)")
-	registryUrl := flag.String("registry", "", "Registry Service Url")
+	registryAddr := flag.String("registry", "http://[::]:8080", "Registry Service Address")
 	flag.Parse()
 
 	protocol := "tcp"
@@ -24,25 +24,14 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// perform heartbeat
-	go func() {
-		for {
-			time.Sleep(5 * time.Second)
-			// registry.SendHeartbeat()
-		}
-	}()
-
-	// register to service registry
-	// registry.Register()
-
 	// init config with listener
 	cfg, err := config.New(config.Params{
-		Name:        *name,
-		Description: *desc,
-		Env:         *env,
-		Protocol:    protocol,
-		Listener:    listener,
-		RegistryURL: *registryUrl,
+		Name:         *name,
+		Description:  *desc,
+		Env:          *env,
+		Protocol:     protocol,
+		Listener:     listener,
+		RegistryAddr: *registryAddr,
 	})
 	if err != nil {
 		log.Fatal(err)
@@ -53,20 +42,31 @@ func main() {
 		Listener: listener,
 	})
 
+	// register to service registry
+	registry.Register(*cfg)
+
+	// perform heartbeat
+	go func(cfg config.Config) {
+		for {
+			time.Sleep(5 * time.Second)
+			registry.SendHeartbeat(cfg)
+		}
+	}(*cfg)
+
 	err = api.Serve()
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	// on server <graceful> shutdown, de-register from service registry
-	// registry.Unregister()
+	// registry.Unregister(*cfg)
 
 }
 
 // todo: figure out if this would be better than time.Sleep (seems so..)
-func startHeartbeatScheduler() {
-	ticker := time.NewTicker(30 * time.Second)
-	for range ticker.C {
-		registry.SendHeartbeat()
-	}
-}
+// func startHeartbeatScheduler() {
+// 	ticker := time.NewTicker(30 * time.Second)
+// 	for range ticker.C {
+// 		registry.SendHeartbeat()
+// 	}
+// }
