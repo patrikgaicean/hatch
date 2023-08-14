@@ -26,5 +26,7 @@ run/gateway:
 .PHONY: run/registry
 run/registry:
 	@CMD="go run ./cmd/registry"; \
+	[[ -n "$(REGISTRY_PORT)" ]] && CMD="$$CMD -port='$(REGISTRY_PORT)'"; \
+	[[ -n "$(ENV)" ]] && CMD="$$CMD -env='$(ENV)'"; \
 	eval $$CMD
 
