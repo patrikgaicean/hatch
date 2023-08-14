@@ -8,7 +8,6 @@ import (
 	"net/http"
 
 	"github.com/patriuk/hatch/internal/api/config"
-	// "github.com/patriuk/hatch/internal/api/config"
 )
 
 // ### service registry data

@@ -9,7 +9,7 @@ import (
 
 type Api struct {
 	Config   config.Config
-	Listener net.Listener
+	listener net.Listener
 }
 
 type Params struct {
@@ -25,7 +25,7 @@ type Params struct {
 func New(params Params) *Api {
 	api := &Api{
 		Config:   params.Config,
-		Listener: params.Listener,
+		listener: params.Listener,
 	}
 
 	// boilerplate
@@ -64,5 +64,5 @@ func New(params Params) *Api {
 // }
 
 func (api *Api) Serve() error {
-	return server.Serve(api.Listener)
+	return server.Serve(api.listener)
 }
