@@ -4,23 +4,13 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 
 	"github.com/patriuk/hatch/internal/api/config"
+	"github.com/patriuk/hatch/internal/helpers"
 )
-
-// ### service registry data
-// 1. Service Name: A unique name or identifier for each service in your registry.
-// 2. Service Description: A brief description or metadata about the service.
-// 3. Address: The IP address where the service is located (IPv4 or IPv6).
-// 4. Port: The port number on which the service is listening.
-// 5. Protocol: The network protocol used by the service (e.g., HTTP, TCP, UDP).
-// 6. IP Type: The IP address type (IPv4 or IPv6).
-// 7. Last Update Time: A timestamp indicating when the service was last updated
-// or registered in the registry.
-// 8. Additional Metadata: Any additional information you might want to store,
-// such as service version, status, or tags
 
 type discovery struct {
 	Name     string `json:"name"`
@@ -30,7 +20,6 @@ type discovery struct {
 	IPType   string `json:"ipType"`
 }
 
-// Register sends a request to register with the registry service.
 func Register(cfg config.Config) {
 	payload := &discovery{
 		Name:     cfg.Name,
@@ -39,24 +28,49 @@ func Register(cfg config.Config) {
 		Protocol: cfg.Protocol,
 		IPType:   cfg.IPType,
 	}
-	jsonData, _ := json.Marshal(payload)
-	fmt.Println("in register func")
-	fmt.Println(cfg.RegistryAddr)
 
-	_, err := http.Post(
+	jsonData, _ := json.Marshal(payload)
+
+	req, err := http.NewRequest(
+		http.MethodPut,
 		cfg.RegistryAddr+"/register",
-		"application/json",
 		bytes.NewBuffer(jsonData),
 	)
 	if err != nil {
-		fmt.Println("error pls")
+		log.Fatal(err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == 200 {
+		fmt.Println("successfully registered")
+		return
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
 		log.Fatal(err)
 	}
 
-	// log internally that app registered
+	errs := make(map[string]interface{})
+	err = json.Unmarshal(body, &errs)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.Fatalf(
+		"failed to register\ncode %d\nerrors: %v",
+		resp.StatusCode,
+		helpers.PrettyPrint(errs),
+	)
 }
 
-// Unregister sends a request to unregister from the registry service.
 func Unregister(cfg config.Config) {
 	payload := &discovery{
 		Name:     cfg.Name,
@@ -68,19 +82,46 @@ func Unregister(cfg config.Config) {
 
 	jsonData, _ := json.Marshal(payload)
 
-	_, err := http.Post(
+	req, err := http.NewRequest(
+		http.MethodDelete,
 		cfg.RegistryAddr+"/unregister",
-		"application/json",
 		bytes.NewBuffer(jsonData),
 	)
 	if err != nil {
 		log.Fatal(err)
 	}
+	req.Header.Set("Content-Type", "application/json")
 
-	// log internally that app unregistered
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == 200 {
+		fmt.Println("successfully unregistered")
+		return
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	errs := make(map[string]interface{})
+	err = json.Unmarshal(body, &errs)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.Fatalf(
+		"failed to unregister\ncode %d\nerrors: %v",
+		resp.StatusCode,
+		helpers.PrettyPrint(errs),
+	)
 }
 
-// SendHeartbeat sends a heartbeat request to the registry service.
 func SendHeartbeat(cfg config.Config) {
 	payload := &discovery{
 		Name:     cfg.Name,
@@ -92,7 +133,7 @@ func SendHeartbeat(cfg config.Config) {
 
 	jsonData, _ := json.Marshal(payload)
 
-	_, err := http.Post(
+	resp, err := http.Post(
 		cfg.RegistryAddr+"/refresh",
 		"application/json",
 		bytes.NewBuffer(jsonData),
@@ -100,4 +141,27 @@ func SendHeartbeat(cfg config.Config) {
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == 200 {
+		fmt.Println("successfully refreshed")
+		return
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	errs := make(map[string]interface{})
+	err = json.Unmarshal(body, &errs)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.Fatalf(
+		"failed to refresh\ncode %d\nerrors: %v",
+		resp.StatusCode,
+		helpers.PrettyPrint(errs),
+	)
 }

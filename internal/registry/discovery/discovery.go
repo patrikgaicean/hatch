@@ -17,7 +17,10 @@ type Discovery struct {
 	Protocol string `json:"protocol"`
 	IPType   string `json:"ipType"`
 	// Address  string `json:"address"` -- add in redis though
+	// timestamp string -- add in redis
 }
+
+var Services []Discovery
 
 // todo: validation
 func Register(w http.ResponseWriter, r *http.Request) {
@@ -34,6 +37,7 @@ func Register(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fmt.Println(helpers.PrettyPrint(v))
+	Services = append(Services, *v)
 	// logic to register -> add in redis
 }
 
@@ -71,6 +75,11 @@ func Refresh(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Println(helpers.PrettyPrint(v))
 	// logic to refresh -> update timestamp in redis?
+}
+
+func GetServices(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("registry service - get services handler")
+	fmt.Println(helpers.PrettyPrint(Services))
 }
 
 // probably need to implement a routine to clean the registry (redis) every
