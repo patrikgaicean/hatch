@@ -1,0 +1,53 @@
+version: '3.8'
+
+# todo: complete the gateway and registry setup
+services:
+  gateway:
+    container-name: gateway
+    image:
+    build:
+      context: ./
+      dockerfile: ??
+    depends_on:
+      - redis-db
+    ports:
+      - 8000:8000
+    environment:
+      REDIS_HOST: redis-db
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: eYVX7EwVmmxKPCDmwMtyKVge8oLd2t81
+    links:
+      - redis-db
+    volumes:
+      - ./:/src
+
+  registry:
+    container-name: gateway
+    build:
+      context: ./
+      dockerfile: ??
+    depends_on:
+      - redis-db
+    ports:
+      - 8000:8000
+    environment:
+      REDIS_HOST: redis-db
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: eYVX7EwVmmxKPCDmwMtyKVge8oLd2t81
+    links:
+      - redis-db
+    volumes:
+      - ./:/src
+
+  redis-db:
+    image: redis:6.2-alpine
+    restart: always
+    ports:
+      - '6379:6379'
+    command: redis-server --save 20 1 --loglevel warning --requirepass eYVX7EwVmmxKPCDmwMtyKVge8oLd2t81
+    volumes:
+      - redis-db:/data
+
+volumes:
+  redis-db:
+    driver: local

@@ -28,5 +28,8 @@ run/registry:
 	@CMD="go run ./cmd/registry"; \
 	[[ -n "$(REGISTRY_PORT)" ]] && CMD="$$CMD -port='$(REGISTRY_PORT)'"; \
 	[[ -n "$(ENV)" ]] && CMD="$$CMD -env='$(ENV)'"; \
+	[[ -n "$(REDIS_HOST)" ]] && CMD="$$CMD -redisHost='$(REDIS_HOST)'"; \
+	[[ -n "$(REDIS_PORT)" ]] && CMD="$$CMD -redisPort='$(REDIS_PORT)'"; \
+	[[ -n "$(REDIS_PASSWORD)" ]] && CMD="$$CMD -redisPassword='$(REDIS_PASSWORD)'"; \
 	eval $$CMD
 

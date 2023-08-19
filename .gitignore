@@ -18,6 +18,8 @@
 !LICENSE
 
 !Makefile
+!docker-compose.yml
+!docker-compose-redis.yml
 
 # ...even if they are in subdirectories
 !*/
