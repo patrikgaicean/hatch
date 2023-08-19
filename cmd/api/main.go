@@ -13,9 +13,21 @@ import (
 
 func main() {
 	name := flag.String("name", "hatch-service", "Service Name")
-	desc := flag.String("desc", "sample-service-for-gateway-testing", "Service Description")
-	env := flag.String("env", "development", "Environment (development|staging|production)")
-	registryAddr := flag.String("registry", "http://[::]:8080", "Registry Service Address")
+	desc := flag.String(
+		"desc",
+		"sample-service-for-gateway-testing",
+		"Service Description",
+	)
+	env := flag.String(
+		"env",
+		"development",
+		"Environment (development|staging|production)",
+	)
+	registryAddr := flag.String(
+		"registry",
+		"http://[::]:8080",
+		"Registry Service Address",
+	)
 	flag.Parse()
 
 	protocol := "tcp"

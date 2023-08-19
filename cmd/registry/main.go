@@ -12,7 +12,11 @@ import (
 
 func main() {
 	port := flag.Int("port", 8080, "Registry port")
-	env := flag.String("env", "development", "Environment (development|staging|production)")
+	env := flag.String(
+		"env",
+		"development",
+		"Environment (development|staging|production)",
+	)
 	flag.Parse()
 
 	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", *port))

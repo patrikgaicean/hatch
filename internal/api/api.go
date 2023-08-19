@@ -47,22 +47,6 @@ func New(params Params) *Api {
 	return api
 }
 
-// func (app *App) setupRoutes() {
-//     // Initialize and add your API handlers to the router
-//     apiHandler := NewAPIHandler(app.db)
-//     app.router.HandleFunc("/api/resource", apiHandler.HandleResource).Methods("GET")
-//     // Add more routes as needed
-// }
-//
-// func (app *App) setupMiddleware() {
-//     // Add your middleware to the router, if any
-//     // Example: app.router.Use(middleware.MyMiddleware)
-// }
-//
-// func (app *App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-//     app.router.ServeHTTP(w, r)
-// }
-
 func (api *Api) Serve() error {
 	return server.Serve(api.listener)
 }
