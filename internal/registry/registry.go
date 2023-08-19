@@ -33,11 +33,6 @@ func New(params Params) *Registry {
 		router:   router.NewRouter(),
 	}
 
-	// boilerplate
-	// app := &App{
-	// 	router: mux.NewRouter(),
-	// }
-	//
 	// // Initialize and connect to the database
 	// db, err := NewDatabase()
 	// if err != nil {

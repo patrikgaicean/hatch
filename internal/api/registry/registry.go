@@ -21,14 +21,10 @@ import (
 // or registered in the registry.
 // 8. Additional Metadata: Any additional information you might want to store,
 // such as service version, status, or tags
-type register struct {
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	details
-}
 
-type details struct {
-	Address  string `json:"address"`
+type discovery struct {
+	Name     string `json:"name"`
+	IP       string `json:"ip"`
 	Port     uint16 `json:"port"`
 	Protocol string `json:"protocol"`
 	IPType   string `json:"ipType"`
@@ -36,20 +32,19 @@ type details struct {
 
 // Register sends a request to register with the registry service.
 func Register(cfg config.Config) {
-	payload := &register{
-		Name:        cfg.Name,
-		Description: cfg.Description,
-		details: details{
-			Address:  cfg.Address,
-			Port:     cfg.Port,
-			Protocol: cfg.Protocol,
-			IPType:   cfg.IPType,
-		},
+	payload := &discovery{
+		Name:     cfg.Name,
+		IP:       cfg.IP,
+		Port:     cfg.Port,
+		Protocol: cfg.Protocol,
+		IPType:   cfg.IPType,
 	}
 	jsonData, _ := json.Marshal(payload)
+	fmt.Println("in register func")
+	fmt.Println(cfg.RegistryAddr)
 
 	_, err := http.Post(
-		cfg.RegistryAddr,
+		cfg.RegistryAddr+"/register",
 		"application/json",
 		bytes.NewBuffer(jsonData),
 	)
@@ -63,8 +58,9 @@ func Register(cfg config.Config) {
 
 // Unregister sends a request to unregister from the registry service.
 func Unregister(cfg config.Config) {
-	payload := &details{
-		Address:  cfg.Address,
+	payload := &discovery{
+		Name:     cfg.Name,
+		IP:       cfg.IP,
 		Port:     cfg.Port,
 		Protocol: cfg.Protocol,
 		IPType:   cfg.IPType,
@@ -73,7 +69,7 @@ func Unregister(cfg config.Config) {
 	jsonData, _ := json.Marshal(payload)
 
 	_, err := http.Post(
-		cfg.RegistryAddr,
+		cfg.RegistryAddr+"/unregister",
 		"application/json",
 		bytes.NewBuffer(jsonData),
 	)
@@ -86,8 +82,9 @@ func Unregister(cfg config.Config) {
 
 // SendHeartbeat sends a heartbeat request to the registry service.
 func SendHeartbeat(cfg config.Config) {
-	payload := &details{
-		Address:  cfg.Address,
+	payload := &discovery{
+		Name:     cfg.Name,
+		IP:       cfg.IP,
 		Port:     cfg.Port,
 		Protocol: cfg.Protocol,
 		IPType:   cfg.IPType,
@@ -96,7 +93,7 @@ func SendHeartbeat(cfg config.Config) {
 	jsonData, _ := json.Marshal(payload)
 
 	_, err := http.Post(
-		cfg.RegistryAddr,
+		cfg.RegistryAddr+"/refresh",
 		"application/json",
 		bytes.NewBuffer(jsonData),
 	)

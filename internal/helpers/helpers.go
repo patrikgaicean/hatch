@@ -1,6 +1,7 @@
 package helpers
 
 import (
+	"encoding/json"
 	"fmt"
 	"net"
 )
@@ -17,4 +18,9 @@ func GetIPType(ip string) (string, error) {
 		// fmt.Printf("%s is IPv6.\n", ip)
 		return "IPv6", nil
 	}
+}
+
+func PrettyPrint(i interface{}) string {
+	s, _ := json.MarshalIndent(i, "", "\t")
+	return string(s)
 }
