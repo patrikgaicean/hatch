@@ -13,7 +13,7 @@ import (
 func main() {
 	f := flags.ParseFlags()
 
-	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", f.Port))
+	listener, err := net.Listen("tcp", fmt.Sprintf("%s:%d", f.IP, f.Port))
 	if err != nil {
 		log.Fatal(err)
 	}

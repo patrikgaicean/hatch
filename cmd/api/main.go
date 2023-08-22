@@ -25,13 +25,13 @@ func main() {
 	)
 	registryAddr := flag.String(
 		"registry",
-		"http://[::]:8080",
+		"http://127.0.0.1:8080",
 		"Registry Service Address",
 	)
 	flag.Parse()
 
 	protocol := "tcp"
-	listener, err := net.Listen(protocol, ":0")
+	listener, err := net.Listen(protocol, "127.0.0.1:0")
 	if err != nil {
 		log.Fatal(err)
 	}

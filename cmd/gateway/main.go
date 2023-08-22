@@ -16,10 +16,10 @@ type config struct {
 
 type application struct {
 	config config
-	// logger *jsonlog.Logger
 }
 
 func main() {
+	ip := flag.String("ip", "127.0.0.1", "Gateway ip")
 	port := flag.Int("port", 8000, "Gateway port")
 	flag.Parse()
 
@@ -28,7 +28,7 @@ func main() {
 	})
 
 	srv := &http.Server{
-		Addr:         fmt.Sprintf(":%d", *port),
+		Addr:         fmt.Sprintf("%s:%d", *ip, *port),
 		Handler:      handler,
 		IdleTimeout:  time.Minute,
 		ReadTimeout:  5 * time.Second,

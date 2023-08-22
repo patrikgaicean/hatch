@@ -7,6 +7,7 @@ import (
 )
 
 type flags struct {
+	IP    string
 	Port  uint16
 	Env   string
 	Redis struct {
@@ -23,6 +24,7 @@ func ParseFlags() flags {
 		redisPort  uint
 	)
 
+	flag.StringVar(&f.IP, "ip", "127.0.0.1", "Registry ip")
 	flag.UintVar(&serverPort, "port", 8080, "Registry port")
 	flag.StringVar(
 		&f.Env,
