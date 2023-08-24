@@ -64,17 +64,33 @@ func ParseFlags() flags {
 	)
 	flag.Parse()
 
+	if f.IP == "" {
+		f.IP = defaults.IP
+	}
+
 	if serverPort > math.MaxUint16 {
 		fmt.Println("Error: Server port value exceeds the range of uint16")
 		// todo: return error
 	}
 	f.Port = uint16(serverPort)
 
+	if f.Env == "" {
+		f.Env = defaults.Env
+	}
+
+	if f.Redis.Host == "" {
+		f.Redis.Host = defaults.Redis.Host
+	}
+
 	if redisPort > math.MaxUint16 {
 		fmt.Println("Error: Redis port value exceeds the range of uint16")
 		// todo: return error
 	}
 	f.Redis.Port = uint16(redisPort)
+
+	if f.Redis.Password == "" {
+		f.Redis.Password = defaults.Redis.Password
+	}
 
 	return f
 }
