@@ -10,11 +10,13 @@ type flags struct {
 	IP    string
 	Port  uint16
 	Env   string
-	Redis struct {
-		Host     string
-		Port     uint16
-		Password string
-	}
+	Redis redis
+}
+
+type redis struct {
+	Host     string
+	Port     uint16
+	Password string
 }
 
 func ParseFlags() flags {
@@ -24,20 +26,40 @@ func ParseFlags() flags {
 		redisPort  uint
 	)
 
-	flag.StringVar(&f.IP, "ip", "127.0.0.1", "Registry ip")
-	flag.UintVar(&serverPort, "port", 8080, "Registry port")
+	flag.StringVar(
+		&f.IP,
+		"ip",
+		defaults.IP,
+		"Registry ip",
+	)
+	flag.UintVar(
+		&serverPort,
+		"port",
+		uint(defaults.Port),
+		"Registry port",
+	)
 	flag.StringVar(
 		&f.Env,
 		"env",
-		"development",
+		defaults.Env,
 		"Environment (development|staging|production)",
 	)
-	flag.StringVar(&f.Redis.Host, "redisHost", "redis-db", "Redis Host")
-	flag.UintVar(&redisPort, "redisPort", 6379, "Redis Port")
+	flag.StringVar(
+		&f.Redis.Host,
+		"redisHost",
+		defaults.Redis.Host,
+		"Redis Host",
+	)
+	flag.UintVar(
+		&redisPort,
+		"redisPort",
+		uint(defaults.Redis.Port),
+		"Redis Port",
+	)
 	flag.StringVar(
 		&f.Redis.Password,
 		"redisPassword",
-		"eYVX7EwVmmxKPCDmwMtyKVge8oLd2t81",
+		defaults.Redis.Password,
 		"Redis Password",
 	)
 	flag.Parse()
