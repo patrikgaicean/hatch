@@ -1,58 +1,50 @@
 package registry
 
 import (
+	"context"
+	"fmt"
+	"log"
 	"net"
-	"net/http"
 
 	"github.com/patriuk/hatch/internal/registry/config"
+	"github.com/patriuk/hatch/internal/registry/handlers"
+	"github.com/patriuk/hatch/internal/registry/repositories"
 	"github.com/patriuk/hatch/internal/registry/router"
 	"github.com/patriuk/hatch/internal/registry/server"
+	"github.com/redis/go-redis/v9"
 )
 
-type Registry struct {
-	Config   config.Config
-	listener net.Listener
-	router   http.Handler
-}
-
-type Params struct {
-	Config   config.Config
-	Listener net.Listener
-}
-
-func New(params Params) *Registry {
-	registry := &Registry{
-		Config:   params.Config,
-		listener: params.Listener,
-		router:   router.NewRouter(),
+func ListenAndServe(cfg config.Config) error {
+	l, err := net.Listen("tcp", fmt.Sprintf("%s:%d", cfg.IP, cfg.Port))
+	if err != nil {
+		log.Fatal(err)
 	}
 
-	// // Initialize and connect to the database
-	// db, err := NewDatabase()
-	// if err != nil {
-	// 	// Handle the error
-	// }
-	// app.db = db
-	//
-	// // Wire up your routes and middleware
-	// app.setupRoutes()
-	// app.setupMiddleware()
+	redisURL := fmt.Sprintf(
+		"redis://%s:%s@%s:%d/",
+		"default",
+		cfg.Redis.Password,
+		cfg.Redis.Host,
+		cfg.Redis.Port,
+	)
 
-	return registry
-}
+	opt, err := redis.ParseURL(redisURL)
+	if err != nil {
+		panic(err)
+	}
 
-//	func (app *App) setupRoutes() {
-//	    // Initialize and add your API handlers to the router
-//	    apiHandler := NewAPIHandler(app.db)
-//	    app.router.HandleFunc("/api/resource", apiHandler.HandleResource).Methods("GET")
-//	    // Add more routes as needed
-//	}
-//
-//	func (app *App) setupMiddleware() {
-//	    // Add your middleware to the router, if any
-//	    // Example: app.router.Use(middleware.MyMiddleware)
-//	}
+	client := redis.NewClient(opt)
+	ctx := context.Background()
+	repos := repositories.SetupRepos(repositories.Params{
+		Redis: repositories.RedisDb{
+			Client: client,
+			Ctx:    ctx,
+		},
+	})
 
-func (registry *Registry) Serve() error {
-	return server.Serve(registry.listener, registry.router)
+	handlers := handlers.SetupHandlers(*repos)
+	router := router.SetupRoutes(*handlers)
+
+	err = server.Serve(l, router)
+	return err
 }

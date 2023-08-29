@@ -4,22 +4,22 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/patriuk/hatch/internal/registry/discovery"
+	"github.com/patriuk/hatch/internal/registry/handlers"
 )
 
-func NewRouter() *mux.Router {
+func SetupRoutes(handlers handlers.Handlers) *mux.Router {
 	r := mux.NewRouter()
 
-	r.HandleFunc("/register", discovery.Register).
+	r.HandleFunc("/register", handlers.Discovery.Register).
 		Methods(http.MethodPut)
 
-	r.HandleFunc("/unregister", discovery.Unregister).
+	r.HandleFunc("/unregister", handlers.Discovery.Unregister).
 		Methods(http.MethodDelete)
 
-	r.HandleFunc("/refresh", discovery.Refresh).
+	r.HandleFunc("/refresh", handlers.Discovery.Refresh).
 		Methods(http.MethodPost)
 
-	r.HandleFunc("/services", discovery.GetServices).
+	r.HandleFunc("/services", handlers.Discovery.GetServices).
 		Methods(http.MethodGet)
 
 	return r

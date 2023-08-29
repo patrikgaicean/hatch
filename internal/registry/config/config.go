@@ -8,17 +8,16 @@ type RedisConfig struct {
 
 type Config struct {
 	Env   string
+	IP    string
+	Port  uint16
 	Redis RedisConfig
 }
 
-type Params struct {
-	Env   string
-	Redis RedisConfig
-}
-
-func New(params Params) *Config {
+func New(params Config) *Config {
 	return &Config{
 		Env:   params.Env,
+		IP:    params.IP,
+		Port:  params.Port,
 		Redis: params.Redis,
 	}
 }

@@ -1,9 +1,7 @@
 package main
 
 import (
-	"fmt"
 	"log"
-	"net"
 
 	"github.com/patriuk/hatch/internal/registry"
 	"github.com/patriuk/hatch/internal/registry/config"
@@ -13,13 +11,10 @@ import (
 func main() {
 	f := flags.ParseFlags()
 
-	listener, err := net.Listen("tcp", fmt.Sprintf("%s:%d", f.IP, f.Port))
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	cfg := config.New(config.Params{
-		Env: f.Env,
+	cfg := config.New(config.Config{
+		Env:  f.Env,
+		IP:   f.IP,
+		Port: f.Port,
 		Redis: config.RedisConfig{
 			Host:     f.Redis.Host,
 			Port:     f.Redis.Port,
@@ -27,12 +22,7 @@ func main() {
 		},
 	})
 
-	registry := registry.New(registry.Params{
-		Config:   *cfg,
-		Listener: listener,
-	})
-
-	err = registry.Serve()
+	err := registry.ListenAndServe(*cfg)
 	if err != nil {
 		log.Fatal(err)
 	}

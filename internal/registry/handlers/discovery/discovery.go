@@ -8,7 +8,18 @@ import (
 	"net/http"
 
 	"github.com/patriuk/hatch/internal/helpers"
+	"github.com/patriuk/hatch/internal/registry/repositories/service"
 )
+
+type Handler struct {
+	repo service.ServiceRepository
+}
+
+func NewHandler(repo service.ServiceRepository) *Handler {
+	return &Handler{
+		repo: repo,
+	}
+}
 
 type Discovery struct {
 	Name     string `json:"name"`
@@ -23,7 +34,7 @@ type Discovery struct {
 var Services []Discovery
 
 // todo: validation
-func Register(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("registry service - register handler")
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -39,9 +50,11 @@ func Register(w http.ResponseWriter, r *http.Request) {
 	fmt.Println(helpers.PrettyPrint(v))
 	Services = append(Services, *v)
 	// logic to register -> add in redis
+
+	// h.KvStore.RegisterService()
 }
 
-func Unregister(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) Unregister(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("registry service - unregister handler")
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -59,7 +72,7 @@ func Unregister(w http.ResponseWriter, r *http.Request) {
 	// logic to unregister -> delete from redis
 }
 
-func Refresh(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) Refresh(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("registry service - refresh handler")
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -77,7 +90,7 @@ func Refresh(w http.ResponseWriter, r *http.Request) {
 	// logic to refresh -> update timestamp in redis?
 }
 
-func GetServices(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) GetServices(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("registry service - get services handler")
 	fmt.Println(helpers.PrettyPrint(Services))
 }
