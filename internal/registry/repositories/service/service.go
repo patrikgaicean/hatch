@@ -36,7 +36,7 @@ type ServiceRepository interface {
 	Unregister(service Service) error
 	Refresh(service Service) error
 	GetAll(name string) error
-	Cleanup() error
+	Cleanup(ttl int64) error
 }
 
 type ServiceRepo struct {
@@ -71,19 +71,15 @@ func (repo *ServiceRepo) Unregister(service Service) error {
 }
 
 func (repo *ServiceRepo) Refresh(service Service) error {
-	fmt.Println("in refresh")
 	key := getServiceKey(service)
 
-	res, err := repo.client.HSet(repo.ctx, key, "timestamp", service.Timestamp).Result()
+	_, err := repo.client.HSet(repo.ctx, key, "timestamp", service.Timestamp).Result()
 	if err != nil {
-		fmt.Println("RegisterService error")
+		fmt.Println("Error updating timestamp:", err)
+		return err
 	}
 
-	if res == 0 {
-		fmt.Printf("Key %s does not exist", key)
-	} else {
-		fmt.Printf("Updated %s key with timestamp", key)
-	}
+	fmt.Printf("Updated %s key with timestamp %d\n", key, service.Timestamp)
 
 	return nil
 }
@@ -112,7 +108,7 @@ func (repo *ServiceRepo) GetAll(name string) error {
 	return nil
 }
 
-func (repo *ServiceRepo) Cleanup() error {
+func (repo *ServiceRepo) Cleanup(ttl int64) error {
 	keys := scanAllKeys(*repo, "")
 
 	for _, key := range keys {
@@ -128,7 +124,7 @@ func (repo *ServiceRepo) Cleanup() error {
 		}
 		ti := int64(ts)
 
-		if t-ti > 15 {
+		if t-ti > ttl {
 			err := repo.client.Del(repo.ctx, key).Err()
 			if err != nil {
 				log.Fatal(err)

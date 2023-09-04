@@ -7,10 +7,11 @@ import (
 )
 
 type flags struct {
-	IP    string
-	Port  uint16
-	Env   string
-	Redis redis
+	IP      string
+	Port    uint16
+	Env     string
+	Cleanup int64
+	Redis   redis
 }
 
 type redis struct {
@@ -44,6 +45,12 @@ func ParseFlags() flags {
 		defaults.Env,
 		"Environment (development|staging|production)",
 	)
+	flag.Int64Var(
+		&f.Cleanup,
+		"cleanup",
+		defaults.Cleanup,
+		"Cleanup interval",
+	)
 	flag.StringVar(
 		&f.Redis.Host,
 		"redisHost",
@@ -70,7 +77,6 @@ func ParseFlags() flags {
 
 	if serverPort > math.MaxUint16 {
 		fmt.Println("Error: Server port value exceeds the range of uint16")
-		// todo: return error
 	}
 	f.Port = uint16(serverPort)
 
@@ -84,7 +90,6 @@ func ParseFlags() flags {
 
 	if redisPort > math.MaxUint16 {
 		fmt.Println("Error: Redis port value exceeds the range of uint16")
-		// todo: return error
 	}
 	f.Redis.Port = uint16(redisPort)
 

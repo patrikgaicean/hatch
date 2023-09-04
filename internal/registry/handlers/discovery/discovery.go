@@ -103,7 +103,7 @@ func (h *Handler) GetServices(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) Test(w http.ResponseWriter, r *http.Request) {
-	h.repo.Cleanup()
+	h.repo.Cleanup(15)
 }
 
 // probably need to implement a routine to clean the registry (redis) every

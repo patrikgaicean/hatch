@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"time"
 
 	"github.com/patriuk/hatch/internal/registry/config"
 	"github.com/patriuk/hatch/internal/registry/handlers"
@@ -44,6 +45,23 @@ func ListenAndServe(cfg config.Config) error {
 
 	handlers := handlers.SetupHandlers(*repos)
 	router := router.SetupRoutes(*handlers)
+
+	// cleanup every x seconds based on cfg.Cleanup
+	ticker := time.NewTicker(time.Duration(cfg.Cleanup) * time.Second)
+	quit := make(chan struct{})
+	go func() {
+		for {
+			select {
+			case <-ticker.C:
+				repos.ServiceRepo.Cleanup(cfg.Cleanup)
+			case <-quit:
+				ticker.Stop()
+				return
+			}
+		}
+	}()
+	// close(quit) on server graceful shutdown ? though it will get closed
+	// if server crashes anyway..
 
 	err = server.Serve(l, router)
 	return err

@@ -12,9 +12,10 @@ func main() {
 	f := flags.ParseFlags()
 
 	cfg := config.New(config.Config{
-		Env:  f.Env,
-		IP:   f.IP,
-		Port: f.Port,
+		Env:     f.Env,
+		IP:      f.IP,
+		Port:    f.Port,
+		Cleanup: f.Cleanup,
 		Redis: config.RedisConfig{
 			Host:     f.Redis.Host,
 			Port:     f.Redis.Port,
