@@ -2,29 +2,47 @@ package service
 
 import (
 	"context"
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
+	"log"
+	"reflect"
+	"time"
 
+	"github.com/patriuk/hatch/internal/helpers"
 	"github.com/redis/go-redis/v9"
 )
 
-// todo: figure out if we still need the json tags
 type Service struct {
-	ID        string `json:"id"`
-	Name      string `json:"name"`
-	IP        string `json:"ip"`
-	Port      uint16 `json:"port"`
-	Protocol  string `json:"protocol"`
-	IPType    string `json:"ipType"`
-	Address   string `json:"address"`
-	Timestamp string `json:"timestamp"`
+	Name     string `redis:"name"`
+	IP       string `redis:"ip"`
+	Port     uint16 `redis:"port"`
+	Protocol string `redis:"protocol"`
+	IPType   string `redis:"ipType"`
+}
+
+type ServiceModel struct {
+	Name      string `redis:"name"`
+	IP        string `redis:"ip"`
+	Port      uint16 `redis:"port"`
+	Protocol  string `redis:"protocol"`
+	IPType    string `redis:"ipType"`
+	Timestamp int64  `redis:"timestamp"`
+}
+
+type ServiceHash struct {
+	Name     string
+	IP       string
+	Port     uint16
+	Protocol string
+	IPType   string
 }
 
 type ServiceRepository interface {
-	RegisterService(service Service) error
-	GetServiceByID(serviceID string) (Service, error)
-	TestRedis()
-	// Other service-related methods
+	Register(service Service) error
+	Unregister(service Service) error
+	Refresh(service Service) error
+	GetAllByName(name string) error
 }
 
 type ServiceRepo struct {
@@ -32,57 +50,145 @@ type ServiceRepo struct {
 	ctx    context.Context
 }
 
-func NewRepo(client *redis.Client, ctx context.Context) ServiceRepository {
+func NewServiceRepo(client *redis.Client, ctx context.Context) ServiceRepository {
 	return &ServiceRepo{client: client, ctx: ctx}
 }
 
-func (repo *ServiceRepo) TestRedis() {
+func (repo *ServiceRepo) Register(service Service) error {
+	key := getServiceKey(service)
+	model := buildServiceModel(service)
 
-	err := repo.client.Set(repo.ctx, "foo", "bar", 0).Err()
+	err := repo.client.HSet(repo.ctx, key, model).Err()
 	if err != nil {
-		panic(err)
+		fmt.Println("RegisterService error")
 	}
 
-	val, err := repo.client.Get(repo.ctx, "foo").Result()
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println("foo", val)
+	return nil
 }
 
-// definitely change these to use hash instead of json
-// we'll need to be able to query by service name
-// actually, lemme list operations:
+func (repo *ServiceRepo) Unregister(service Service) error {
+	key := getServiceKey(service)
 
-// register full body
-// update timestamp
-// delete by timestamp
-// get all by name
-// probably get by id, not sure if we can update without checking
-// that the entry actually exists
-
-func (repo *ServiceRepo) RegisterService(service Service) error {
-	serviceJSON, err := json.Marshal(service)
+	err := repo.client.HDel(repo.ctx, key).Err()
 	if err != nil {
-		return err
+		fmt.Println("UnregisterService error")
 	}
-	err = repo.client.Set(repo.ctx, getServiceKey(service.ID), serviceJSON, 0).Err()
-	return err
+
+	return nil
 }
 
-func (repo *ServiceRepo) GetServiceByID(serviceID string) (Service, error) {
-	serviceJSON, err := repo.client.Get(repo.ctx, getServiceKey(serviceID)).Bytes()
+func (repo *ServiceRepo) Refresh(service Service) error {
+	fmt.Println("in refresh")
+	key := getServiceKey(service)
+
+	res, err := repo.client.HSet(repo.ctx, key, "timestamp", time.Now().Unix()).Result()
 	if err != nil {
-		return Service{}, err
+		fmt.Println("RegisterService error")
 	}
-	var service Service
-	err = json.Unmarshal(serviceJSON, &service)
-	if err != nil {
-		return Service{}, err
+
+	if res == 0 {
+		fmt.Printf("Key %s does not exist", key)
+	} else {
+		fmt.Printf("Updated %s key with timestamp", key)
 	}
-	return service, nil
+
+	return nil
 }
 
-func getServiceKey(serviceID string) string {
-	return "service:" + serviceID
+func (repo *ServiceRepo) GetAllByName(name string) error {
+	pattern := fmt.Sprintf("%s:*", name)
+	fmt.Println("pattern - ", pattern)
+
+	var cursor uint64
+	var keys []string
+
+	for {
+		var foundKeys []string
+		var err error
+		foundKeys, cursor, err = repo.client.Scan(context.Background(), cursor, pattern, 0).Result()
+		if err != nil {
+			log.Fatal(err)
+		}
+		keys = append(keys, foundKeys...)
+
+		if cursor == 0 {
+			break
+		}
+	}
+
+	var services []ServiceModel
+	for _, key := range keys {
+		val, err := repo.client.HGetAll(repo.ctx, key).Result()
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Println("Key:", key)
+		s := hashToModel(val)
+		services = append(services, s)
+	}
+
+	for _, v := range services {
+		fmt.Println(helpers.PrettyPrint(v))
+	}
+
+	return nil
+}
+
+func getServiceKey(service Service) string {
+	serialized, err := json.Marshal(ServiceHash{
+		Name:     service.Name,
+		IP:       service.IP,
+		Port:     service.Port,
+		Protocol: service.Protocol,
+		IPType:   service.IPType,
+	})
+	if err != nil {
+		// handle error
+	}
+
+	hash := sha256.Sum256(serialized)
+	hashString := fmt.Sprintf("%x", hash)
+	key := fmt.Sprintf("%s:%s", service.Name, hashString)
+
+	return key
+}
+
+func buildServiceModel(service Service) ServiceModel {
+	return ServiceModel{
+		Name:      service.Name,
+		IP:        service.IP,
+		Port:      service.Port,
+		Protocol:  service.Protocol,
+		IPType:    service.IPType,
+		Timestamp: time.Now().Unix(),
+	}
+}
+
+func hashToModel(hashData map[string]string) ServiceModel {
+	var service ServiceModel
+
+	elem := reflect.ValueOf(&service).Elem()
+	typeOfElem := elem.Type()
+
+	for i := 0; i < elem.NumField(); i++ {
+		field := elem.Field(i)
+		tag := typeOfElem.Field(i).Tag.Get("redis")
+
+		if value, ok := hashData[tag]; ok {
+			switch field.Type().Kind() {
+			case reflect.String:
+				field.SetString(value)
+			case reflect.Uint16:
+				var parsedValue uint16
+				fmt.Sscanf(value, "%d", &parsedValue)
+				field.SetUint(uint64(parsedValue))
+			case reflect.Int64:
+				var parsedValue int64
+				fmt.Sscanf(value, "%d", &parsedValue)
+				field.SetInt(parsedValue)
+			}
+		}
+	}
+
+	return service
 }

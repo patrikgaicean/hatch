@@ -21,7 +21,7 @@ type RedisDb struct {
 }
 
 func SetupRepos(params Params) *Repositories {
-	serviceRepo := service.NewRepo(
+	serviceRepo := service.NewServiceRepo(
 		params.Redis.Client,
 		params.Redis.Ctx,
 	)

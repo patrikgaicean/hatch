@@ -21,17 +21,7 @@ func NewHandler(repo service.ServiceRepository) *Handler {
 	}
 }
 
-type Discovery struct {
-	Name     string `json:"name"`
-	IP       string `json:"ip"`
-	Port     uint16 `json:"port"`
-	Protocol string `json:"protocol"`
-	IPType   string `json:"ipType"`
-	// Address  string `json:"address"` -- add in redis though
-	// timestamp string -- add in redis
-}
-
-var Services []Discovery
+var Services []service.Service
 
 // todo: validation
 func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
@@ -41,17 +31,23 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err)
 	}
 
-	v := &Discovery{}
-	err = json.Unmarshal(body, v)
+	s := &service.Service{}
+	err = json.Unmarshal(body, s)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	fmt.Println(helpers.PrettyPrint(v))
-	Services = append(Services, *v)
+	fmt.Println(helpers.PrettyPrint(s))
+	Services = append(Services, *s)
 	// logic to register -> add in redis
 
-	// h.KvStore.RegisterService()
+	h.repo.Register(service.Service{
+		Name:     s.Name,
+		IP:       s.IP,
+		Port:     s.Port,
+		Protocol: s.Protocol,
+		IPType:   s.IPType,
+	})
 }
 
 func (h *Handler) Unregister(w http.ResponseWriter, r *http.Request) {
@@ -62,14 +58,21 @@ func (h *Handler) Unregister(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// probably need to create a hash of details to keep as key
-	v := &Discovery{}
-	err = json.Unmarshal(body, v)
+	s := &service.Service{}
+	err = json.Unmarshal(body, s)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	fmt.Println(helpers.PrettyPrint(v))
+	fmt.Println(helpers.PrettyPrint(s))
 	// logic to unregister -> delete from redis
+	h.repo.Unregister(service.Service{
+		Name:     s.Name,
+		IP:       s.IP,
+		Port:     s.Port,
+		Protocol: s.Protocol,
+		IPType:   s.IPType,
+	})
 }
 
 func (h *Handler) Refresh(w http.ResponseWriter, r *http.Request) {
@@ -80,19 +83,26 @@ func (h *Handler) Refresh(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// probably need to create a hash of details to keep as key
-	v := &Discovery{}
-	err = json.Unmarshal(body, v)
+	s := &service.Service{}
+	err = json.Unmarshal(body, s)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	fmt.Println(helpers.PrettyPrint(v))
+	fmt.Println(helpers.PrettyPrint(s))
 	// logic to refresh -> update timestamp in redis?
+
+	h.repo.Refresh(service.Service{
+		Name:     s.Name,
+		IP:       s.IP,
+		Port:     s.Port,
+		Protocol: s.Protocol,
+		IPType:   s.IPType,
+	})
 }
 
 func (h *Handler) GetServices(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("registry service - get services handler")
-	fmt.Println(helpers.PrettyPrint(Services))
+	h.repo.GetAllByName("something")
 }
 
 // probably need to implement a routine to clean the registry (redis) every

@@ -22,5 +22,7 @@ func SetupRoutes(handlers handlers.Handlers) *mux.Router {
 	r.HandleFunc("/services", handlers.Discovery.GetServices).
 		Methods(http.MethodGet)
 
+	// todo add GetAllByName with param name
+
 	return r
 }
