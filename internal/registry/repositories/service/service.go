@@ -93,11 +93,11 @@ func (repo *ServiceRepo) GetAll(name string) error {
 
 	var services []Service
 	for _, key := range keys {
-		val, err := repo.client.HGetAll(repo.ctx, key).Result()
+		var s Service
+		err := repo.client.HGetAll(repo.ctx, key).Scan(&s)
 		if err != nil {
 			log.Fatal(err)
 		}
-		s := hashToModel(val)
 		services = append(services, s)
 	}
 
@@ -173,33 +173,4 @@ func scanAllKeys(repo ServiceRepo, pattern string) []string {
 	}
 
 	return keys
-}
-
-func hashToModel(hashData map[string]string) Service {
-	var service Service
-
-	elem := reflect.ValueOf(&service).Elem()
-	typeOfElem := elem.Type()
-
-	for i := 0; i < elem.NumField(); i++ {
-		field := elem.Field(i)
-		tag := typeOfElem.Field(i).Tag.Get("redis")
-
-		if value, ok := hashData[tag]; ok {
-			switch field.Type().Kind() {
-			case reflect.String:
-				field.SetString(value)
-			case reflect.Uint16:
-				var parsedValue uint16
-				fmt.Sscanf(value, "%d", &parsedValue)
-				field.SetUint(uint64(parsedValue))
-			case reflect.Int64:
-				var parsedValue int64
-				fmt.Sscanf(value, "%d", &parsedValue)
-				field.SetInt(parsedValue)
-			}
-		}
-	}
-
-	return service
 }
