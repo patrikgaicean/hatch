@@ -97,7 +97,13 @@ func (h *Handler) Refresh(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) GetServices(w http.ResponseWriter, r *http.Request) {
-	h.repo.GetAllByName("something")
+	// check name param, if it exists put name otherwise empty string
+	name := ""
+	h.repo.GetAll(name)
+}
+
+func (h *Handler) Test(w http.ResponseWriter, r *http.Request) {
+	h.repo.Cleanup()
 }
 
 // probably need to implement a routine to clean the registry (redis) every

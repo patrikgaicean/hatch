@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"log"
 	"reflect"
+	"strconv"
+	"time"
 
 	"github.com/patriuk/hatch/internal/helpers"
 	"github.com/redis/go-redis/v9"
@@ -33,7 +35,8 @@ type ServiceRepository interface {
 	Register(service Service) error
 	Unregister(service Service) error
 	Refresh(service Service) error
-	GetAllByName(name string) error
+	GetAll(name string) error
+	Cleanup() error
 }
 
 type ServiceRepo struct {
@@ -59,7 +62,7 @@ func (repo *ServiceRepo) Register(service Service) error {
 func (repo *ServiceRepo) Unregister(service Service) error {
 	key := getServiceKey(service)
 
-	err := repo.client.HDel(repo.ctx, key).Err()
+	err := repo.client.Del(repo.ctx, key).Err()
 	if err != nil {
 		fmt.Println("UnregisterService error")
 	}
@@ -85,26 +88,12 @@ func (repo *ServiceRepo) Refresh(service Service) error {
 	return nil
 }
 
-func (repo *ServiceRepo) GetAllByName(name string) error {
-	pattern := fmt.Sprintf("%s:*", name)
-	fmt.Println("pattern - ", pattern)
-
-	var cursor uint64
-	var keys []string
-
-	for {
-		var foundKeys []string
-		var err error
-		foundKeys, cursor, err = repo.client.Scan(context.Background(), cursor, pattern, 0).Result()
-		if err != nil {
-			log.Fatal(err)
-		}
-		keys = append(keys, foundKeys...)
-
-		if cursor == 0 {
-			break
-		}
+func (repo *ServiceRepo) GetAll(name string) error {
+	pattern := ""
+	if len(name) != 0 {
+		pattern = fmt.Sprintf("%s:*", name)
 	}
+	keys := scanAllKeys(*repo, pattern)
 
 	var services []Service
 	for _, key := range keys {
@@ -112,13 +101,39 @@ func (repo *ServiceRepo) GetAllByName(name string) error {
 		if err != nil {
 			log.Fatal(err)
 		}
-		fmt.Println("Key:", key)
 		s := hashToModel(val)
 		services = append(services, s)
 	}
 
 	for _, v := range services {
 		fmt.Println(helpers.PrettyPrint(v))
+	}
+
+	return nil
+}
+
+func (repo *ServiceRepo) Cleanup() error {
+	keys := scanAllKeys(*repo, "")
+
+	for _, key := range keys {
+		val, err := repo.client.HGetAll(repo.ctx, key).Result()
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		t := time.Now().Unix()
+		ts, err := strconv.Atoi(val["timestamp"])
+		if err != nil {
+			log.Fatal(err)
+		}
+		ti := int64(ts)
+
+		if t-ti > 15 {
+			err := repo.client.Del(repo.ctx, key).Err()
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
 	}
 
 	return nil
@@ -141,6 +156,27 @@ func getServiceKey(service Service) string {
 	key := fmt.Sprintf("%s:%s", service.Name, hashString)
 
 	return key
+}
+
+func scanAllKeys(repo ServiceRepo, pattern string) []string {
+	var keys []string
+	var cursor uint64
+
+	for {
+		var foundKeys []string
+		var err error
+		foundKeys, cursor, err = repo.client.Scan(context.Background(), cursor, pattern, 0).Result()
+		if err != nil {
+			log.Fatal(err)
+		}
+		keys = append(keys, foundKeys...)
+
+		if cursor == 0 {
+			break
+		}
+	}
+
+	return keys
 }
 
 func hashToModel(hashData map[string]string) Service {
