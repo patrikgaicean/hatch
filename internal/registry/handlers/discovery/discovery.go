@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/patriuk/hatch/internal/helpers"
 	"github.com/patriuk/hatch/internal/registry/repositories/service"
@@ -20,8 +21,6 @@ func NewHandler(repo service.ServiceRepository) *Handler {
 		repo: repo,
 	}
 }
-
-var Services []service.Service
 
 // todo: validation
 func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
@@ -38,8 +37,6 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fmt.Println(helpers.PrettyPrint(s))
-	Services = append(Services, *s)
-	// logic to register -> add in redis
 
 	h.repo.Register(service.Service{
 		Name:     s.Name,
@@ -57,7 +54,6 @@ func (h *Handler) Unregister(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err)
 	}
 
-	// probably need to create a hash of details to keep as key
 	s := &service.Service{}
 	err = json.Unmarshal(body, s)
 	if err != nil {
@@ -65,7 +61,7 @@ func (h *Handler) Unregister(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fmt.Println(helpers.PrettyPrint(s))
-	// logic to unregister -> delete from redis
+
 	h.repo.Unregister(service.Service{
 		Name:     s.Name,
 		IP:       s.IP,
@@ -82,7 +78,6 @@ func (h *Handler) Refresh(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err)
 	}
 
-	// probably need to create a hash of details to keep as key
 	s := &service.Service{}
 	err = json.Unmarshal(body, s)
 	if err != nil {
@@ -90,14 +85,14 @@ func (h *Handler) Refresh(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fmt.Println(helpers.PrettyPrint(s))
-	// logic to refresh -> update timestamp in redis?
 
 	h.repo.Refresh(service.Service{
-		Name:     s.Name,
-		IP:       s.IP,
-		Port:     s.Port,
-		Protocol: s.Protocol,
-		IPType:   s.IPType,
+		Name:      s.Name,
+		IP:        s.IP,
+		Port:      s.Port,
+		Protocol:  s.Protocol,
+		IPType:    s.IPType,
+		Timestamp: time.Now().Unix(),
 	})
 }
 

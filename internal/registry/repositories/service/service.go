@@ -7,21 +7,12 @@ import (
 	"fmt"
 	"log"
 	"reflect"
-	"time"
 
 	"github.com/patriuk/hatch/internal/helpers"
 	"github.com/redis/go-redis/v9"
 )
 
 type Service struct {
-	Name     string `redis:"name"`
-	IP       string `redis:"ip"`
-	Port     uint16 `redis:"port"`
-	Protocol string `redis:"protocol"`
-	IPType   string `redis:"ipType"`
-}
-
-type ServiceModel struct {
 	Name      string `redis:"name"`
 	IP        string `redis:"ip"`
 	Port      uint16 `redis:"port"`
@@ -56,9 +47,8 @@ func NewServiceRepo(client *redis.Client, ctx context.Context) ServiceRepository
 
 func (repo *ServiceRepo) Register(service Service) error {
 	key := getServiceKey(service)
-	model := buildServiceModel(service)
 
-	err := repo.client.HSet(repo.ctx, key, model).Err()
+	err := repo.client.HSet(repo.ctx, key, service).Err()
 	if err != nil {
 		fmt.Println("RegisterService error")
 	}
@@ -81,7 +71,7 @@ func (repo *ServiceRepo) Refresh(service Service) error {
 	fmt.Println("in refresh")
 	key := getServiceKey(service)
 
-	res, err := repo.client.HSet(repo.ctx, key, "timestamp", time.Now().Unix()).Result()
+	res, err := repo.client.HSet(repo.ctx, key, "timestamp", service.Timestamp).Result()
 	if err != nil {
 		fmt.Println("RegisterService error")
 	}
@@ -116,7 +106,7 @@ func (repo *ServiceRepo) GetAllByName(name string) error {
 		}
 	}
 
-	var services []ServiceModel
+	var services []Service
 	for _, key := range keys {
 		val, err := repo.client.HGetAll(repo.ctx, key).Result()
 		if err != nil {
@@ -153,19 +143,8 @@ func getServiceKey(service Service) string {
 	return key
 }
 
-func buildServiceModel(service Service) ServiceModel {
-	return ServiceModel{
-		Name:      service.Name,
-		IP:        service.IP,
-		Port:      service.Port,
-		Protocol:  service.Protocol,
-		IPType:    service.IPType,
-		Timestamp: time.Now().Unix(),
-	}
-}
-
-func hashToModel(hashData map[string]string) ServiceModel {
-	var service ServiceModel
+func hashToModel(hashData map[string]string) Service {
+	var service Service
 
 	elem := reflect.ValueOf(&service).Elem()
 	typeOfElem := elem.Type()
