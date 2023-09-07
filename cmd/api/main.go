@@ -57,13 +57,20 @@ func main() {
 	// register to service registry
 	registry.Register(*cfg)
 
-	// perform heartbeat
-	go func(cfg config.Config) {
+	// perform heartbeat -- move this to new func perhaps
+	ticker := time.NewTicker(time.Duration(5) * time.Second)
+	quit := make(chan struct{})
+	go func() {
 		for {
-			time.Sleep(5 * time.Second)
-			registry.SendHeartbeat(cfg)
+			select {
+			case <-ticker.C:
+				registry.SendHeartbeat(*cfg)
+			case <-quit:
+				ticker.Stop()
+				return
+			}
 		}
-	}(*cfg)
+	}()
 
 	err = api.Serve()
 	if err != nil {
@@ -71,14 +78,7 @@ func main() {
 	}
 
 	// on server <graceful> shutdown, de-register from service registry
-	// registry.Unregister(*cfg)
-
+	// and close heartbeat channel.
+	close(quit)
+	registry.Unregister(*cfg)
 }
-
-// todo: figure out if this would be better than time.Sleep (seems so..)
-// func startHeartbeatScheduler() {
-// 	ticker := time.NewTicker(30 * time.Second)
-// 	for range ticker.C {
-// 		registry.SendHeartbeat()
-// 	}
-// }
