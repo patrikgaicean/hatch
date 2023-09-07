@@ -23,7 +23,7 @@ type redis struct {
 var defaults flags = flags{
 	IP:      "127.0.0.1",
 	Port:    8080,
-	Env:     "development",
+	Env:     "dev",
 	Cleanup: 15,
 	Redis: redis{
 		Host:     "127.0.0.1",
@@ -55,7 +55,7 @@ func ParseFlags() flags {
 		&f.Env,
 		"env",
 		defaults.Env,
-		"Environment (development|staging|production)",
+		"Environment (dev|stg|prod)",
 	)
 	flag.Int64Var(
 		&f.Cleanup,

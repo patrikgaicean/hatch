@@ -21,7 +21,7 @@ func main() {
 	env := flag.String(
 		"env",
 		"development",
-		"Environment (development|staging|production)",
+		"Environment (dev|stg|prod)",
 	)
 	registryAddr := flag.String(
 		"registry",
