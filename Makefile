@@ -20,6 +20,11 @@ run/api:
 .PHONY: run/gateway
 run/gateway:
 	@CMD="go run ./cmd/gateway"; \
+	[[ -n "$(GATEWAY_IP)" ]] && CMD="$$CMD -ip='$(GATEWAY_IP)'"; \
+	[[ -n "$(GATEWAY_PORT)" ]] && CMD="$$CMD -port='$(GATEWAY_PORT)'"; \
+	[[ -n "$(REDIS_HOST)" ]] && CMD="$$CMD -redisHost='$(REDIS_HOST)'"; \
+	[[ -n "$(REDIS_PORT)" ]] && CMD="$$CMD -redisPort='$(REDIS_PORT)'"; \
+	[[ -n "$(REDIS_PASSWORD)" ]] && CMD="$$CMD -redisPassword='$(REDIS_PASSWORD)'"; \
 	eval $$CMD
 
 ## run/registry: run the cmd/registry application

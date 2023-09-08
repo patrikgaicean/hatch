@@ -51,6 +51,7 @@ func (repo *ServiceRepo) Register(service Service) error {
 
 	ctx := context.Background()
 	err := repo.client.HSet(ctx, key, service).Err()
+
 	if err != nil {
 		fmt.Println("RegisterService error")
 	}
@@ -165,12 +166,7 @@ func scanAllKeys(repo ServiceRepo, pattern string) []string {
 	for {
 		var foundKeys []string
 		var err error
-		foundKeys, cursor, err = repo.client.Scan(
-			ctx,
-			cursor,
-			pattern,
-			0,
-		).Result()
+		foundKeys, cursor, err = repo.client.Scan(ctx, cursor, pattern, 0).Result()
 		if err != nil {
 			log.Fatal(err)
 		}

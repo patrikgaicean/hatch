@@ -1,42 +1,29 @@
 package main
 
 import (
-	"flag"
 	"fmt"
-	"log"
-	"net/http"
-	"time"
+
+	"github.com/patriuk/hatch/internal/gateway"
+	"github.com/patriuk/hatch/internal/gateway/config"
+	"github.com/patriuk/hatch/internal/gateway/flags"
 )
 
-type config struct {
-	name string
-	env  string
-	port int
-}
-
-type application struct {
-	config config
-}
-
 func main() {
-	ip := flag.String("ip", "127.0.0.1", "Gateway ip")
-	port := flag.Int("port", 8000, "Gateway port")
-	flag.Parse()
+	f := flags.ParseFlags()
 
-	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("hello darkness my old friend from the gateway\n"))
+	cfg := config.New(config.Config{
+		Env:  f.Env,
+		IP:   f.IP,
+		Port: f.Port,
+		Redis: config.RedisConfig{
+			Host:     f.Redis.Host,
+			Port:     f.Redis.Port,
+			Password: f.Redis.Password,
+		},
 	})
 
-	srv := &http.Server{
-		Addr:         fmt.Sprintf("%s:%d", *ip, *port),
-		Handler:      handler,
-		IdleTimeout:  time.Minute,
-		ReadTimeout:  5 * time.Second,
-		WriteTimeout: 10 * time.Second,
+	err := gateway.ListenAndServe(*cfg)
+	if err != nil {
+		fmt.Println("server error")
 	}
-
-	log.Printf("Starting server on %s", srv.Addr)
-
-	err := srv.ListenAndServe()
-	log.Fatal(err)
 }
