@@ -40,17 +40,17 @@ type ServiceRepository interface {
 
 type ServiceRepo struct {
 	client *redis.Client
-	ctx    context.Context
 }
 
-func NewServiceRepo(client *redis.Client, ctx context.Context) ServiceRepository {
-	return &ServiceRepo{client: client, ctx: ctx}
+func NewServiceRepo(client *redis.Client) ServiceRepository {
+	return &ServiceRepo{client: client}
 }
 
 func (repo *ServiceRepo) Register(service Service) error {
 	key := getServiceKey(service)
 
-	err := repo.client.HSet(repo.ctx, key, service).Err()
+	ctx := context.Background()
+	err := repo.client.HSet(ctx, key, service).Err()
 	if err != nil {
 		fmt.Println("RegisterService error")
 	}
@@ -61,7 +61,8 @@ func (repo *ServiceRepo) Register(service Service) error {
 func (repo *ServiceRepo) Unregister(service Service) error {
 	key := getServiceKey(service)
 
-	err := repo.client.Del(repo.ctx, key).Err()
+	ctx := context.Background()
+	err := repo.client.Del(ctx, key).Err()
 	if err != nil {
 		fmt.Println("UnregisterService error")
 	}
@@ -72,7 +73,8 @@ func (repo *ServiceRepo) Unregister(service Service) error {
 func (repo *ServiceRepo) Refresh(service Service) error {
 	key := getServiceKey(service)
 
-	_, err := repo.client.HSet(repo.ctx, key, "timestamp", service.Timestamp).Result()
+	ctx := context.Background()
+	_, err := repo.client.HSet(ctx, key, "timestamp", service.Timestamp).Result()
 	if err != nil {
 		fmt.Println("Error updating timestamp:", err)
 		return err
@@ -89,11 +91,12 @@ func (repo *ServiceRepo) GetAll(name string) error {
 		pattern = fmt.Sprintf("%s:*", name)
 	}
 	keys := scanAllKeys(*repo, pattern)
+	ctx := context.Background()
 
 	var services []Service
 	for _, key := range keys {
 		var s Service
-		err := repo.client.HGetAll(repo.ctx, key).Scan(&s)
+		err := repo.client.HGetAll(ctx, key).Scan(&s)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -109,9 +112,10 @@ func (repo *ServiceRepo) GetAll(name string) error {
 
 func (repo *ServiceRepo) Cleanup(ttl int64) error {
 	keys := scanAllKeys(*repo, "")
+	ctx := context.Background()
 
 	for _, key := range keys {
-		val, err := repo.client.HGetAll(repo.ctx, key).Result()
+		val, err := repo.client.HGetAll(ctx, key).Result()
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -124,7 +128,7 @@ func (repo *ServiceRepo) Cleanup(ttl int64) error {
 		ti := int64(ts)
 
 		if t-ti > ttl {
-			err := repo.client.Del(repo.ctx, key).Err()
+			err := repo.client.Del(ctx, key).Err()
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -156,11 +160,17 @@ func getServiceKey(service Service) string {
 func scanAllKeys(repo ServiceRepo, pattern string) []string {
 	var keys []string
 	var cursor uint64
+	ctx := context.Background()
 
 	for {
 		var foundKeys []string
 		var err error
-		foundKeys, cursor, err = repo.client.Scan(context.Background(), cursor, pattern, 0).Result()
+		foundKeys, cursor, err = repo.client.Scan(
+			ctx,
+			cursor,
+			pattern,
+			0,
+		).Result()
 		if err != nil {
 			log.Fatal(err)
 		}

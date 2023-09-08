@@ -17,12 +17,9 @@ type Handler struct {
 }
 
 func NewHandler(repo service.ServiceRepository) *Handler {
-	return &Handler{
-		repo: repo,
-	}
+	return &Handler{repo: repo}
 }
 
-// todo: validation
 func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("registry service - register handler")
 	body, err := io.ReadAll(r.Body)
@@ -105,7 +102,3 @@ func (h *Handler) GetServices(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) Test(w http.ResponseWriter, r *http.Request) {
 	h.repo.Cleanup(15)
 }
-
-// probably need to implement a routine to clean the registry (redis) every
-// whatever seconds/time interval. so having a timestamp for the data would
-// probably be useful..

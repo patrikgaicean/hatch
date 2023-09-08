@@ -1,7 +1,6 @@
 package registry
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"net"
@@ -35,12 +34,8 @@ func ListenAndServe(cfg config.Config) error {
 	}
 
 	client := redis.NewClient(opt)
-	ctx := context.Background()
 	repos := repositories.SetupRepos(repositories.Params{
-		Redis: repositories.RedisDb{
-			Client: client,
-			Ctx:    ctx,
-		},
+		Redis: repositories.RedisDb{Client: client},
 	})
 
 	handlers := handlers.SetupHandlers(*repos)
