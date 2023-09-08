@@ -9,16 +9,8 @@ type Repositories struct {
 	ServiceRepo service.ServiceRepository
 }
 
-type Params struct {
-	Redis RedisDb
-}
-
-type RedisDb struct {
-	Client *redis.Client
-}
-
-func SetupRepos(params Params) *Repositories {
-	serviceRepo := service.NewServiceRepo(params.Redis.Client)
+func SetupRepos(rc *redis.Client) *Repositories {
+	serviceRepo := service.NewServiceRepo(rc)
 
 	return &Repositories{ServiceRepo: serviceRepo}
 }

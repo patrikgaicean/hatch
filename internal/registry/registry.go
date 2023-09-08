@@ -15,12 +15,12 @@ import (
 )
 
 func ListenAndServe(cfg config.Config) error {
-	l, err := net.Listen("tcp", fmt.Sprintf("%s:%d", cfg.IP, cfg.Port))
+	listener, err := net.Listen("tcp", fmt.Sprintf("%s:%d", cfg.IP, cfg.Port))
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	redisURL := fmt.Sprintf(
+	URL := fmt.Sprintf(
 		"redis://%s:%s@%s:%d/",
 		"default",
 		cfg.Redis.Password,
@@ -28,16 +28,13 @@ func ListenAndServe(cfg config.Config) error {
 		cfg.Redis.Port,
 	)
 
-	opt, err := redis.ParseURL(redisURL)
+	opt, err := redis.ParseURL(URL)
 	if err != nil {
 		panic(err)
 	}
 
-	client := redis.NewClient(opt)
-	repos := repositories.SetupRepos(repositories.Params{
-		Redis: repositories.RedisDb{Client: client},
-	})
-
+	redisClient := redis.NewClient(opt)
+	repos := repositories.SetupRepos(redisClient)
 	handlers := handlers.SetupHandlers(*repos)
 	router := router.SetupRoutes(*handlers)
 
@@ -58,6 +55,6 @@ func ListenAndServe(cfg config.Config) error {
 	// close(quit) on server graceful shutdown ? though it will get closed
 	// if server crashes anyway..
 
-	err = server.Serve(l, router)
+	err = server.Serve(listener, router)
 	return err
 }

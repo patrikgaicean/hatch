@@ -31,9 +31,9 @@ type ServiceHash struct {
 }
 
 type ServiceRepository interface {
-	Register(service Service) error
-	Unregister(service Service) error
-	Refresh(service Service) error
+	Register(s Service) error
+	Unregister(s Service) error
+	Refresh(s Service) error
 	GetAll(name string) error
 	Cleanup(ttl int64) error
 }
@@ -42,15 +42,15 @@ type ServiceRepo struct {
 	client *redis.Client
 }
 
-func NewServiceRepo(client *redis.Client) ServiceRepository {
-	return &ServiceRepo{client: client}
+func NewServiceRepo(rc *redis.Client) ServiceRepository {
+	return &ServiceRepo{client: rc}
 }
 
-func (repo *ServiceRepo) Register(service Service) error {
-	key := getServiceKey(service)
+func (repo *ServiceRepo) Register(s Service) error {
+	key := getServiceKey(s)
 
 	ctx := context.Background()
-	err := repo.client.HSet(ctx, key, service).Err()
+	err := repo.client.HSet(ctx, key, s).Err()
 
 	if err != nil {
 		fmt.Println("RegisterService error")
@@ -59,8 +59,8 @@ func (repo *ServiceRepo) Register(service Service) error {
 	return nil
 }
 
-func (repo *ServiceRepo) Unregister(service Service) error {
-	key := getServiceKey(service)
+func (repo *ServiceRepo) Unregister(s Service) error {
+	key := getServiceKey(s)
 
 	ctx := context.Background()
 	err := repo.client.Del(ctx, key).Err()
@@ -71,17 +71,17 @@ func (repo *ServiceRepo) Unregister(service Service) error {
 	return nil
 }
 
-func (repo *ServiceRepo) Refresh(service Service) error {
-	key := getServiceKey(service)
+func (repo *ServiceRepo) Refresh(s Service) error {
+	key := getServiceKey(s)
 
 	ctx := context.Background()
-	_, err := repo.client.HSet(ctx, key, "timestamp", service.Timestamp).Result()
+	_, err := repo.client.HSet(ctx, key, "timestamp", s.Timestamp).Result()
 	if err != nil {
 		fmt.Println("Error updating timestamp:", err)
 		return err
 	}
 
-	fmt.Printf("Updated %s key with timestamp %d\n", key, service.Timestamp)
+	fmt.Printf("Updated %s key with timestamp %d\n", key, s.Timestamp)
 
 	return nil
 }
@@ -139,13 +139,13 @@ func (repo *ServiceRepo) Cleanup(ttl int64) error {
 	return nil
 }
 
-func getServiceKey(service Service) string {
+func getServiceKey(s Service) string {
 	serialized, err := json.Marshal(ServiceHash{
-		Name:     service.Name,
-		IP:       service.IP,
-		Port:     service.Port,
-		Protocol: service.Protocol,
-		IPType:   service.IPType,
+		Name:     s.Name,
+		IP:       s.IP,
+		Port:     s.Port,
+		Protocol: s.Protocol,
+		IPType:   s.IPType,
 	})
 	if err != nil {
 		// handle error
@@ -153,12 +153,12 @@ func getServiceKey(service Service) string {
 
 	hash := sha256.Sum256(serialized)
 	hashString := fmt.Sprintf("%x", hash)
-	key := fmt.Sprintf("%s:%s", service.Name, hashString)
+	key := fmt.Sprintf("%s:%s", s.Name, hashString)
 
 	return key
 }
 
-func scanAllKeys(repo ServiceRepo, pattern string) []string {
+func scanAllKeys(r ServiceRepo, pattern string) []string {
 	var keys []string
 	var cursor uint64
 	ctx := context.Background()
@@ -166,7 +166,7 @@ func scanAllKeys(repo ServiceRepo, pattern string) []string {
 	for {
 		var foundKeys []string
 		var err error
-		foundKeys, cursor, err = repo.client.Scan(ctx, cursor, pattern, 0).Result()
+		foundKeys, cursor, err = r.client.Scan(ctx, cursor, pattern, 0).Result()
 		if err != nil {
 			log.Fatal(err)
 		}
