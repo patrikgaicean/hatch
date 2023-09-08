@@ -12,7 +12,6 @@ import (
 type Config struct {
 	Env          string
 	Name         string
-	Description  string
 	Address      string
 	IP           string
 	Port         uint16
@@ -24,7 +23,6 @@ type Config struct {
 type Params struct {
 	Env          string
 	Name         string
-	Description  string
 	Protocol     string
 	Listener     net.Listener
 	RegistryAddr string
@@ -42,7 +40,6 @@ func New(params Params) (*Config, error) {
 	return &Config{
 		Env:          params.Env,
 		Name:         params.Name,
-		Description:  params.Description,
 		Address:      addr.String(),
 		IP:           addr.IP.String(),
 		Port:         uint16(addr.Port),

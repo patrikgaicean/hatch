@@ -11,7 +11,6 @@ help:
 run/api:
 	@CMD="go run ./cmd/api"; \
 	[[ -n "$(SERVICE_NAME)" ]] && CMD="$$CMD -name='$(SERVICE_NAME)'"; \
-	[[ -n "$(SERVICE_DESC)" ]] && CMD="$$CMD -desc='$(SERVICE_DESC)'"; \
 	[[ -n "$(ENV)" ]] && CMD="$$CMD -env='$(ENV)'"; \
 	[[ -n "$(REGISTRY_ADDR)" ]] && CMD="$$CMD -registry='$(REGISTRY_ADDR)'"; \
 	eval $$CMD

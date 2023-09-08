@@ -13,11 +13,6 @@ import (
 
 func main() {
 	name := flag.String("name", "hatch-service", "Service Name")
-	desc := flag.String(
-		"desc",
-		"sample-service-for-gateway-testing",
-		"Service Description",
-	)
 	env := flag.String(
 		"env",
 		"development",
@@ -39,7 +34,6 @@ func main() {
 	// init config with listener
 	cfg, err := config.New(config.Params{
 		Name:         *name,
-		Description:  *desc,
 		Env:          *env,
 		Protocol:     protocol,
 		Listener:     listener,
