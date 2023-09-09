@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/patriuk/hatch/internal/common"
-	"github.com/patriuk/hatch/internal/helpers"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -16,7 +15,6 @@ type ServiceRepository interface {
 	Register(s common.Service) error
 	Unregister(s common.Service) error
 	Refresh(s common.Service) error
-	GetAll(name string) error
 	Cleanup(ttl int64) error
 }
 
@@ -68,32 +66,8 @@ func (repo *ServiceRepo) Refresh(s common.Service) error {
 	return nil
 }
 
-func (repo *ServiceRepo) GetAll(name string) error {
-	pattern := ""
-	if len(name) != 0 {
-		pattern = fmt.Sprintf("%s:*", name)
-	}
-	keys := common.ScanAllKeys(repo.client, pattern)
-	ctx := context.Background()
-
-	var services []common.Service
-	for _, key := range keys {
-		var s common.Service
-		err := repo.client.HGetAll(ctx, key).Scan(&s)
-		if err != nil {
-			log.Fatal(err)
-		}
-		services = append(services, s)
-	}
-
-	for _, v := range services {
-		fmt.Println(helpers.PrettyPrint(v))
-	}
-
-	return nil
-}
-
 func (repo *ServiceRepo) Cleanup(ttl int64) error {
+	fmt.Println("in cleanup")
 	keys := common.ScanAllKeys(repo.client, "")
 	ctx := context.Background()
 
@@ -115,6 +89,7 @@ func (repo *ServiceRepo) Cleanup(ttl int64) error {
 			if err != nil {
 				log.Fatal(err)
 			}
+			fmt.Printf("deleted key %s\n", key)
 		}
 	}
 

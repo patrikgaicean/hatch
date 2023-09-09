@@ -19,13 +19,5 @@ func SetupRoutes(h handlers.Handlers) *mux.Router {
 	r.HandleFunc("/refresh", h.Discovery.Refresh).
 		Methods(http.MethodPost)
 
-	r.HandleFunc("/services", h.Discovery.GetServices).
-		Methods(http.MethodGet)
-
-	// todo add GetAllByName with param name
-
-	r.HandleFunc("/test", h.Discovery.Test).
-		Methods(http.MethodGet)
-
 	return r
 }

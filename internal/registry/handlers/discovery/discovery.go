@@ -78,13 +78,3 @@ func (h *Handler) Refresh(w http.ResponseWriter, r *http.Request) {
 
 	h.repo.Refresh(*s)
 }
-
-func (h *Handler) GetServices(w http.ResponseWriter, r *http.Request) {
-	// check name param, if it exists put name otherwise empty string
-	name := ""
-	h.repo.GetAll(name)
-}
-
-func (h *Handler) Test(w http.ResponseWriter, r *http.Request) {
-	h.repo.Cleanup(15)
-}
