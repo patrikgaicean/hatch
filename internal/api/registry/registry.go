@@ -12,7 +12,7 @@ import (
 	"github.com/patriuk/hatch/internal/helpers"
 )
 
-type discovery struct {
+type serviceDetails struct {
 	Name     string `json:"name"`
 	IP       string `json:"ip"`
 	Port     uint16 `json:"port"`
@@ -21,7 +21,7 @@ type discovery struct {
 }
 
 func Register(cfg config.Config) {
-	payload := &discovery{
+	payload := &serviceDetails{
 		Name:     cfg.Name,
 		IP:       cfg.IP,
 		Port:     cfg.Port,
@@ -72,7 +72,7 @@ func Register(cfg config.Config) {
 }
 
 func Unregister(cfg config.Config) {
-	payload := &discovery{
+	payload := &serviceDetails{
 		Name:     cfg.Name,
 		IP:       cfg.IP,
 		Port:     cfg.Port,
@@ -123,7 +123,7 @@ func Unregister(cfg config.Config) {
 }
 
 func SendHeartbeat(cfg config.Config) {
-	payload := &discovery{
+	payload := &serviceDetails{
 		Name:     cfg.Name,
 		IP:       cfg.IP,
 		Port:     cfg.Port,
