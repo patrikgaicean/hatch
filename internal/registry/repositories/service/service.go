@@ -2,38 +2,20 @@ package service
 
 import (
 	"context"
-	"crypto/sha256"
-	"encoding/json"
 	"fmt"
 	"log"
 	"strconv"
 	"time"
 
+	"github.com/patriuk/hatch/internal/common"
 	"github.com/patriuk/hatch/internal/helpers"
 	"github.com/redis/go-redis/v9"
 )
 
-type Service struct {
-	Name      string `redis:"name"`
-	IP        string `redis:"ip"`
-	Port      uint16 `redis:"port"`
-	Protocol  string `redis:"protocol"`
-	IPType    string `redis:"ipType"`
-	Timestamp int64  `redis:"timestamp"`
-}
-
-type ServiceHash struct {
-	Name     string
-	IP       string
-	Port     uint16
-	Protocol string
-	IPType   string
-}
-
 type ServiceRepository interface {
-	Register(s Service) error
-	Unregister(s Service) error
-	Refresh(s Service) error
+	Register(s common.Service) error
+	Unregister(s common.Service) error
+	Refresh(s common.Service) error
 	GetAll(name string) error
 	Cleanup(ttl int64) error
 }
@@ -46,8 +28,8 @@ func NewServiceRepo(rc *redis.Client) ServiceRepository {
 	return &ServiceRepo{client: rc}
 }
 
-func (repo *ServiceRepo) Register(s Service) error {
-	key := getServiceKey(s)
+func (repo *ServiceRepo) Register(s common.Service) error {
+	key := common.GetServiceKey(s)
 
 	ctx := context.Background()
 	err := repo.client.HSet(ctx, key, s).Err()
@@ -59,8 +41,8 @@ func (repo *ServiceRepo) Register(s Service) error {
 	return nil
 }
 
-func (repo *ServiceRepo) Unregister(s Service) error {
-	key := getServiceKey(s)
+func (repo *ServiceRepo) Unregister(s common.Service) error {
+	key := common.GetServiceKey(s)
 
 	ctx := context.Background()
 	err := repo.client.Del(ctx, key).Err()
@@ -71,8 +53,8 @@ func (repo *ServiceRepo) Unregister(s Service) error {
 	return nil
 }
 
-func (repo *ServiceRepo) Refresh(s Service) error {
-	key := getServiceKey(s)
+func (repo *ServiceRepo) Refresh(s common.Service) error {
+	key := common.GetServiceKey(s)
 
 	ctx := context.Background()
 	_, err := repo.client.HSet(ctx, key, "timestamp", s.Timestamp).Result()
@@ -91,12 +73,12 @@ func (repo *ServiceRepo) GetAll(name string) error {
 	if len(name) != 0 {
 		pattern = fmt.Sprintf("%s:*", name)
 	}
-	keys := scanAllKeys(*repo, pattern)
+	keys := common.ScanAllKeys(repo.client, pattern)
 	ctx := context.Background()
 
-	var services []Service
+	var services []common.Service
 	for _, key := range keys {
-		var s Service
+		var s common.Service
 		err := repo.client.HGetAll(ctx, key).Scan(&s)
 		if err != nil {
 			log.Fatal(err)
@@ -112,7 +94,7 @@ func (repo *ServiceRepo) GetAll(name string) error {
 }
 
 func (repo *ServiceRepo) Cleanup(ttl int64) error {
-	keys := scanAllKeys(*repo, "")
+	keys := common.ScanAllKeys(repo.client, "")
 	ctx := context.Background()
 
 	for _, key := range keys {
@@ -137,45 +119,4 @@ func (repo *ServiceRepo) Cleanup(ttl int64) error {
 	}
 
 	return nil
-}
-
-func getServiceKey(s Service) string {
-	serialized, err := json.Marshal(ServiceHash{
-		Name:     s.Name,
-		IP:       s.IP,
-		Port:     s.Port,
-		Protocol: s.Protocol,
-		IPType:   s.IPType,
-	})
-	if err != nil {
-		// handle error
-	}
-
-	hash := sha256.Sum256(serialized)
-	hashString := fmt.Sprintf("%x", hash)
-	key := fmt.Sprintf("%s:%s", s.Name, hashString)
-
-	return key
-}
-
-func scanAllKeys(r ServiceRepo, pattern string) []string {
-	var keys []string
-	var cursor uint64
-	ctx := context.Background()
-
-	for {
-		var foundKeys []string
-		var err error
-		foundKeys, cursor, err = r.client.Scan(ctx, cursor, pattern, 0).Result()
-		if err != nil {
-			log.Fatal(err)
-		}
-		keys = append(keys, foundKeys...)
-
-		if cursor == 0 {
-			break
-		}
-	}
-
-	return keys
 }

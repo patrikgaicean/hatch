@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/patriuk/hatch/internal/common"
 	"github.com/patriuk/hatch/internal/helpers"
 	"github.com/patriuk/hatch/internal/registry/repositories/service"
 )
@@ -27,7 +28,9 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err)
 	}
 
-	s := &service.Service{}
+	s := &common.Service{
+		Timestamp: time.Now().Unix(),
+	}
 	err = json.Unmarshal(body, s)
 	if err != nil {
 		log.Fatal(err)
@@ -35,13 +38,7 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Println(helpers.PrettyPrint(s))
 
-	h.repo.Register(service.Service{
-		Name:     s.Name,
-		IP:       s.IP,
-		Port:     s.Port,
-		Protocol: s.Protocol,
-		IPType:   s.IPType,
-	})
+	h.repo.Register(*s)
 }
 
 func (h *Handler) Unregister(w http.ResponseWriter, r *http.Request) {
@@ -51,7 +48,7 @@ func (h *Handler) Unregister(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err)
 	}
 
-	s := &service.Service{}
+	s := &common.Service{}
 	err = json.Unmarshal(body, s)
 	if err != nil {
 		log.Fatal(err)
@@ -59,13 +56,7 @@ func (h *Handler) Unregister(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Println(helpers.PrettyPrint(s))
 
-	h.repo.Unregister(service.Service{
-		Name:     s.Name,
-		IP:       s.IP,
-		Port:     s.Port,
-		Protocol: s.Protocol,
-		IPType:   s.IPType,
-	})
+	h.repo.Unregister(*s)
 }
 
 func (h *Handler) Refresh(w http.ResponseWriter, r *http.Request) {
@@ -75,7 +66,9 @@ func (h *Handler) Refresh(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err)
 	}
 
-	s := &service.Service{}
+	s := &common.Service{
+		Timestamp: time.Now().Unix(),
+	}
 	err = json.Unmarshal(body, s)
 	if err != nil {
 		log.Fatal(err)
@@ -83,14 +76,7 @@ func (h *Handler) Refresh(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Println(helpers.PrettyPrint(s))
 
-	h.repo.Refresh(service.Service{
-		Name:      s.Name,
-		IP:        s.IP,
-		Port:      s.Port,
-		Protocol:  s.Protocol,
-		IPType:    s.IPType,
-		Timestamp: time.Now().Unix(),
-	})
+	h.repo.Refresh(*s)
 }
 
 func (h *Handler) GetServices(w http.ResponseWriter, r *http.Request) {

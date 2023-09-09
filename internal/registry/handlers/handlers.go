@@ -9,8 +9,8 @@ type Handlers struct {
 	Discovery *discovery.Handler
 }
 
-func SetupHandlers(repositories repositories.Repositories) *Handlers {
+func SetupHandlers(repos repositories.Repositories) *Handlers {
 	return &Handlers{
-		Discovery: discovery.NewHandler(repositories.ServiceRepo),
+		Discovery: discovery.NewHandler(repos.ServiceRepo),
 	}
 }
