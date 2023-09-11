@@ -33,7 +33,7 @@ func ListenAndServe(cfg config.Config) error {
 	redisClient := redis.NewClient(opt)
 	serviceRepo := repositories.NewServiceRepo(redisClient, manager)
 
-	handler := handlers.NewGatewayHandler(balancer, serviceRepo)
+	handler := handlers.NewGatewayHandler(balancer, serviceRepo, manager)
 	router := router.SetupRoutes(handler)
 
 	// setup initial services

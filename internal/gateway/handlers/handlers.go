@@ -8,18 +8,21 @@ import (
 	"strings"
 
 	"github.com/patriuk/hatch/internal/gateway/balancer"
+	"github.com/patriuk/hatch/internal/gateway/manager"
 	"github.com/patriuk/hatch/internal/gateway/repositories"
 )
 
 type GatewayHandler struct {
 	Balancer balancer.Balancer
 	repo     repositories.ServiceRepository
+	manager  *manager.Manager
 }
 
-func NewGatewayHandler(balancer balancer.Balancer, repo repositories.ServiceRepository) *GatewayHandler {
+func NewGatewayHandler(balancer balancer.Balancer, repo repositories.ServiceRepository, manager *manager.Manager) *GatewayHandler {
 	return &GatewayHandler{
 		Balancer: balancer,
 		repo:     repo,
+		manager:  manager,
 	}
 }
 
@@ -28,12 +31,12 @@ func (h *GatewayHandler) Ping(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *GatewayHandler) RouteRequest(w http.ResponseWriter, r *http.Request) {
-	parts := strings.SplitN(r.URL.String()[1:], "/", 2)
-	serviceName := parts[0]
-	fmt.Println("parts1 empty? --", parts[1]) // actually panics when it has nothing
-	// to split.. rip
-	rest := "/" + parts[1]
-	fmt.Println("rest --", rest)
+	serviceName, rest := getUrlParts(r.URL.String())
+	ok := h.manager.HasService(serviceName)
+	if !ok {
+		http.Error(w, "Invalid service", http.StatusBadRequest)
+		return
+	}
 
 	instance, err := h.Balancer.GetNextInstance(serviceName)
 	if err != nil {
@@ -60,4 +63,21 @@ func (h *GatewayHandler) RouteRequest(w http.ResponseWriter, r *http.Request) {
 	r.Host = targetURL.Host
 
 	proxy.ServeHTTP(w, r)
+}
+
+func getUrlParts(path string) (string, string) {
+	if strings.Index(path, "/") == 0 {
+		path = path[1:]
+	}
+
+	parts := strings.SplitN(path, "/", 2)
+
+	serviceName := parts[0]
+	rest := "/"
+
+	if len(parts) == 2 {
+		rest += parts[1]
+	}
+
+	return serviceName, rest
 }
