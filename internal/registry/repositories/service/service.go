@@ -68,7 +68,7 @@ func (repo *ServiceRepo) Refresh(s common.Service) error {
 
 func (repo *ServiceRepo) Cleanup(ttl int64) error {
 	fmt.Println("in cleanup")
-	keys := common.ScanAllKeys(repo.client, "")
+	keys := common.ScanAllKeys(repo.client)
 	ctx := context.Background()
 
 	for _, key := range keys {

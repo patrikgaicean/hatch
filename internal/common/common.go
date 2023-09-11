@@ -46,7 +46,7 @@ func GetServiceKey(s Service) string {
 	return key
 }
 
-func ScanAllKeys(rc *redis.Client, pattern string) []string {
+func ScanAllKeys(rc *redis.Client) []string {
 	var keys []string
 	var cursor uint64
 	ctx := context.Background()
@@ -54,7 +54,7 @@ func ScanAllKeys(rc *redis.Client, pattern string) []string {
 	for {
 		var foundKeys []string
 		var err error
-		foundKeys, cursor, err = rc.Scan(ctx, cursor, pattern, 0).Result()
+		foundKeys, cursor, err = rc.Scan(ctx, cursor, "", 0).Result()
 		if err != nil {
 			log.Fatal(err)
 		}
